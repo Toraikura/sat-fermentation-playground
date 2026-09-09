@@ -1,0 +1,77 @@
+name: Build AROMA LAB hotfix assets
+
+on:
+  push:
+    branches:
+      - aroma-lab-name-first-hotfix
+    paths:
+      - aroma-lab/.build-aroma-assets-hotfix
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-name-first-hotfix
+          fetch-depth: 0
+
+      - name: Validate and organize PNG masters
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(aroma-*.png)
+          if [ "${#files[@]}" -ne 60 ]; then
+            echo "Expected 60 root aroma PNGs, found ${#files[@]}" >&2
+            printf '%s\n' "${files[@]}" >&2
+            exit 1
+          fi
+          mkdir -p aroma-lab/assets/aroma-lab/master aroma-lab/assets/aroma-lab/web
+          mv aroma-*.png aroma-lab/assets/aroma-lab/master/
+
+      - name: Build lightweight transparent WebP copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          src = Path('aroma-lab/assets/aroma-lab/master')
+          dst = Path('aroma-lab/assets/aroma-lab/web')
+          dst.mkdir(parents=True, exist_ok=True)
+          files = sorted(src.glob('aroma-*.png'))
+          assert len(files) == 60, len(files)
+          for p in files:
+              with Image.open(p) as im:
+                  im = im.convert('RGBA')
+                  assert im.width == im.height, (p.name, im.size)
+                  im.thumbnail((320, 320), Image.Resampling.LANCZOS)
+                  out = dst / (p.stem + '.webp')
+                  im.save(out, 'WEBP', quality=84, method=6, lossless=False)
+          out_files = sorted(dst.glob('aroma-*.webp'))
+          assert len(out_files) == 60, len(out_files)
+          PY
+
+      - name: Verify asset counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find aroma-lab/assets/aroma-lab/master -maxdepth 1 -type f -name 'aroma-*.png' | wc -l | tr -d ' ')" = "60"
+          test "$(find aroma-lab/assets/aroma-lab/web -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')" = "60"
+
+      - name: Commit organized assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f aroma-lab/.build-aroma-assets-hotfix
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: organize 60 AROMA LAB PNG masters and web assets [skip ci]"
+          git push origin HEAD:aroma-lab-name-first-hotfix
