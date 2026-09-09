@@ -1,0 +1,41 @@
+name: Close obsolete AROMA LAB draft PR
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.close-aroma-draft-pr
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+      - name: Close draft PR now that verified tree is already published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=open&head=Toraikura:aroma-lab-60-icons" --jq '.[0].number // empty')
+          if [ -n "$pr" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/pulls/${pr}" -f state=closed >/dev/null
+          fi
+      - name: Remove temporary cleanup workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f aroma-lab/.close-aroma-draft-pr .github/workflows/close-aroma-draft-pr.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: close obsolete AROMA LAB draft PR" || true
+          git push origin HEAD:aroma-lab-60-icons
