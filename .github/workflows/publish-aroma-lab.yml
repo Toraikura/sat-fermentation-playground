@@ -1,0 +1,119 @@
+name: Publish verified AROMA LAB
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.publish-aroma-lab
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verified branch
+        uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+
+      - name: Final gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f aroma-lab/QA_STATUS.md
+          grep -q "PNG masters: 60" aroma-lab/QA_STATUS.md
+          grep -q "WebP delivery assets: 60" aroma-lab/QA_STATUS.md
+          grep -q "Unique icon references: 60" aroma-lab/QA_STATUS.md
+          grep -q "390x844" aroma-lab/QA_STATUS.md
+          test "$(find aroma-lab/assets/aroma-lab/master -maxdepth 1 -type f -name 'aroma-*.png' | wc -l | tr -d ' ')" = "60"
+          test "$(find aroma-lab/assets/aroma-lab/web -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')" = "60"
+          test "$(grep -oE 'aroma-[a-z0-9-]+\.webp' aroma-lab/app.js | sort -u | wc -l | tr -d ' ')" = "60"
+          node --check aroma-lab/app.js
+
+      - name: Ensure production can fast-forward
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin gh-pages
+          git merge-base --is-ancestor origin/gh-pages HEAD
+
+      - name: Remove temporary implementation scaffolding
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf aroma-lab/assets/aroma-lab/_transfer
+          rm -f aroma-lab/.sync-aroma-icons aroma-lab/.sync-aroma-icons-v2 aroma-lab/.finalize-aroma-assets aroma-lab/.verify-aroma-lab aroma-lab/.cleanup-aroma-qa aroma-lab/.publish-aroma-lab
+          rm -f aroma-lab/DRIVE_SYNC_PROBE.md aroma-lab/AROMA_ASSET_SYNC_FAILED.md aroma-lab/CHECKPOINT.md aroma-lab/QA_STATUS.md
+          rm -f .github/workflows/unpack-aroma-assets.yml .github/workflows/sync-aroma-drive.yml .github/workflows/sync-aroma-drive-v2.yml .github/workflows/finalize-aroma-assets.yml .github/workflows/verify-aroma-lab.yml .github/workflows/cleanup-aroma-qa.yml .github/workflows/publish-aroma-lab.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: finalize AROMA LAB production tree" || true
+
+      - name: Publish to safety branch and production
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:aroma-lab-60-icons
+          git push origin HEAD:gh-pages
+
+      - name: Verify raw production files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 12); do
+            html=$(curl -fsSL "https://raw.githubusercontent.com/Toraikura/sat-fermentation-playground/gh-pages/aroma-lab/index.html" || true)
+            app=$(curl -fsSL "https://raw.githubusercontent.com/Toraikura/sat-fermentation-playground/gh-pages/aroma-lab/app.js" || true)
+            if printf '%s' "$html" | grep -q "AROMA VISUAL INDEX / 60" && printf '%s' "$app" | grep -q "aroma-kerosene.webp"; then
+              curl -fsSI "https://raw.githubusercontent.com/Toraikura/sat-fermentation-playground/gh-pages/aroma-lab/assets/aroma-lab/web/aroma-banana.webp" >/dev/null
+              curl -fsSI "https://raw.githubusercontent.com/Toraikura/sat-fermentation-playground/gh-pages/aroma-lab/assets/aroma-lab/web/aroma-green-aldehydic.webp" >/dev/null
+              curl -fsSI "https://raw.githubusercontent.com/Toraikura/sat-fermentation-playground/gh-pages/aroma-lab/assets/aroma-lab/web/aroma-kerosene.webp" >/dev/null
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Raw production verification timed out" >&2
+          exit 1
+
+      - name: Verify GitHub Pages deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://toraikura.github.io/sat-fermentation-playground/aroma-lab/"
+          for i in $(seq 1 36); do
+            html=$(curl -fsSL "$url" || true)
+            if printf '%s' "$html" | grep -q "AROMA VISUAL INDEX / 60"; then
+              for icon in aroma-banana aroma-green-aldehydic aroma-mureka-musty-steam aroma-kerosene aroma-corn-soup aroma-takuan aroma-natto; do
+                curl -fsSI "${url}assets/aroma-lab/web/${icon}.webp" >/dev/null
+              done
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "GitHub Pages verification timed out" >&2
+          exit 1
+
+      - name: Record verified publish on safety branch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin aroma-lab-60-icons
+          git checkout -B aroma-lab-60-icons origin/aroma-lab-60-icons
+          cat > aroma-lab/PUBLISH_STATUS.md <<'EOF'
+          # AROMA LAB publish status
+
+          - Production branch: gh-pages
+          - 60 PNG masters in repository: PASS
+          - 60 WebP delivery assets in repository: PASS
+          - Raw production HTML/app/assets: PASS
+          - GitHub Pages HTML: PASS
+          - Representative production icon URLs: PASS
+          - Latest kerosene red-can asset: PASS
+          EOF
+          git add aroma-lab/PUBLISH_STATUS.md
+          git commit -m "test: record verified AROMA LAB publish"
+          git push origin HEAD:aroma-lab-60-icons
