@@ -69,7 +69,7 @@ const state={drink:'sake',wine:'standard',family:null,hints:false};
 const discovered=new Set(JSON.parse(localStorage.getItem('sat-aroma-discovered')||'[]'));
 const tabsEl=document.getElementById('tabs'),cardsEl=document.getElementById('cards'),titleEl=document.getElementById('sectionTitle'),kickerEl=document.getElementById('sectionKicker'),wineModes=document.getElementById('wineModes'),familyBanner=document.getElementById('familyBanner'),familyText=document.getElementById('familyText'),toast=document.getElementById('toast');
 const crossMolecules=C.filter(c=>new Set(c.apps.map(a=>a.drink)).size>=2);
-function structureUrl(c){return 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/'+encodeURIComponent(c.query)+'/PNG?record_type=2d'}
+function structureUrl(c){return './assets/structures/'+encodeURIComponent(c.id)+'.svg'}
 function categories(c){return [...new Set(c.apps.map(a=>a.drink))]}
 function officialNo(c){const a=c.apps.find(a=>a.drink===state.drink&&(state.drink!=='wine'||state.wine==='all'||a.set===state.wine));return a?String(a.no).padStart(2,'0'):'--'}
 function getVisible(){let arr;if(state.drink==='cross'){arr=crossMolecules.slice().sort((a,b)=>categories(b).length-categories(a).length||a.ja.localeCompare(b.ja,'ja'))}else{arr=C.filter(c=>c.apps.some(a=>a.drink===state.drink&&(state.drink!=='wine'||state.wine==='all'||a.set===state.wine)))}if(state.family)arr=arr.filter(c=>c.family===state.family);return arr}
