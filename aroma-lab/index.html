@@ -1,23 +1,75 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="theme-color" content="#f3efe3"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3efe3">
 <title>AROMA LAB — Fermentation Playground</title>
-<meta name="description" content="構造式から香りを発見する。日本酒・焼酎／泡盛・ワイン・ビールを横断して、同じ分子と似た形を探すインタラクティブ香り図鑑。"/>
-<link href="./styles.css" rel="stylesheet"/>
+<meta name="description" content="香りの名前とイメージから入り、分子構造と酒類を横断する共通性を探すインタラクティブ香り図鑑。日本酒・焼酎／泡盛・ワイン・ビールを同じ分子でつなぎます。">
+<link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<header class="topbar"><div class="wrap topbar-inner"><a class="brand" href="../"><span class="sat-mark">SAT</span><span>FERMENTATION PLAYGROUND</span></a><a class="back" href="../">← BACK TO PLAYGROUND</a></div></header>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="../" aria-label="Fermentation Playgroundへ戻る"><span class="sat-mark">SAT</span><span>FERMENTATION PLAYGROUND</span></a>
+    <a class="back" href="../">← BACK TO PLAYGROUND</a>
+  </div>
+</header>
 <main>
-<section class="hero"><div class="wrap hero-grid"><div><div class="eyebrow">INTERACTIVE STUDY / 01</div><h1>AROMA<span>LAB</span></h1><p class="lead">においの正体は、形をしている</p><p class="sublead">まず構造を見る。名前はあと。カードをめくると、香りを視覚化したピクトグラムが現れる。日本酒・焼酎／泡盛・ワイン・ビールを横断して、同じ分子と似た官能基を探してみる。</p></div><div class="hero-specimen"><div class="hero-note">DON'T READ. LOOK.</div><img alt="構造式の例" src="https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/isoamyl%20acetate/PNG?record_type=2d"/></div></div></section>
-<section class="instructions"><div class="wrap"><strong>構造式だけを見て、気になるカードに触れてください。裏面に香りのピクトグラムと名前が出ます。</strong><span><span class="desktop-only">HOVER = REVEAL / CLICK = PIN</span><span class="mobile-only">TAP = REVEAL</span></span></div></section>
-<nav class="lab-nav"><div class="wrap nav-scroll"><div class="tabs" id="tabs"></div></div></nav>
-<section class="lab"><div class="wrap"><div class="control-row"><div><div class="section-kicker" id="sectionKicker">SAKE / 19 STANDARDS</div><h2 class="section-title" id="sectionTitle">日本酒の香り</h2></div><div class="controls"><div class="wine-modes" id="wineModes"><button class="control wine-mode active" data-wine="standard">STANDARD 18</button><button class="control wine-mode" data-wine="professional">PRO 20</button><button class="control wine-mode" data-wine="all">ALL 38</button></div><button class="control" id="hintToggle">CHEMISTRY HINT: OFF</button></div><div class="stats"><span>VISIBLE <b id="visibleCount">19</b></span><span>DISCOVERED <b id="discoveredMini">0</b></span></div></div><div class="family-banner" id="familyBanner"><span id="familyText"></span><button id="clearFamily">CLEAR FILTER ×</button></div><div class="cards" id="cards"></div><section class="progress-panel"><div class="progress-copy"><div class="section-kicker">YOUR DISCOVERY TRAIL</div><h2>酒をまたぐ分子を<br/>何個見つけた？</h2><p>同じ構造式が別の酒にも現れる。見つけたカードはこの端末に記録されます。正解数ではなく、構造に気づいた回数のメモです。</p></div><div class="progress-data"><div class="progress-num"><span id="crossFound">0</span><span style="font-size:.32em;letter-spacing:0"> / <span id="crossTotal">0</span></span></div><div class="progress-label">CROSS-DRINK MOLECULES DISCOVERED</div><div class="meter"><i id="meterBar"></i></div><button class="reset" id="resetProgress">RESET DISCOVERY LOG</button></div></section><section class="source-box"><strong>REFERENCE / DATA POLICY</strong><div><div>掲載対象は林純薬工業の官能評価標準試薬ページを基準に整理。清酒19種、焼酎・泡盛20種、ワイン38種（スタンダード18＋プロフェッショナル20）、ビール17種。香りキューとピクトグラムは学習用の代表表現で、濃度・温度・酒のマトリクスによって感じ方は変わります。分子式は表示しません。</div><div class="source-links"><a href="https://direct.hpc-j.co.jp/shop/pages/seishu.aspx" rel="noreferrer" target="_blank">SAKE SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation-shouchu-awamori.aspx" rel="noreferrer" target="_blank">SHOCHU SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation-wine.aspx" rel="noreferrer" target="_blank">WINE SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation_beer.aspx" rel="noreferrer" target="_blank">BEER SOURCE ↗</a></div></div></section></div></section>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <div class="eyebrow">INTERACTIVE STUDY / 01</div>
+      <h1>AROMA<span>LAB</span></h1>
+      <p class="lead">名前から香りを思い出す。<br>構造から、つながりに気づく。</p>
+      <p class="sublead">まず名前と香りを見る。カードをめくると、その香りを生む分子の構造式が現れる。日本酒・焼酎／泡盛・ワイン・ビールを横断して、同じ分子と似た骨格を探してみる。</p>
+    </div>
+    <article class="hero-specimen" aria-label="酢酸イソアミル、バナナの香りの例">
+      <div class="hero-note">NAME → AROMA → MOLECULE</div>
+      <div class="hero-aroma"><img src="./assets/aroma-lab/web/aroma-banana.webp" alt="バナナ" width="160" height="160"><span>BANANA</span></div>
+      <div class="hero-answer"><strong>酢酸イソアミル</strong><small>ISOAMYL ACETATE</small></div>
+    </article>
+  </div>
+</section>
+<section class="instructions">
+  <div class="wrap"><strong>名前と香りのイメージから気になるカードに触れてください。裏面で構造式と「酒をまたぐ共通性」が見えます。</strong><span><span class="desktop-only">HOVER = PEEK / CLICK = PIN</span><span class="mobile-only">TAP = FLIP</span></span></div>
+</section>
+<nav class="lab-nav" aria-label="酒類を切り替える">
+  <div class="wrap nav-scroll"><div class="tabs" id="tabs"></div></div>
+</nav>
+<section class="lab">
+  <div class="wrap">
+    <div class="control-row">
+      <div class="section-heading"><div class="section-kicker" id="sectionKicker">SAKE / 19 STANDARDS</div><h2 class="section-title" id="sectionTitle">日本酒の香り</h2></div>
+      <div class="controls">
+        <div class="wine-modes" id="wineModes" role="group" aria-label="ワイン標準試薬セット">
+          <button class="control wine-mode active" type="button" data-wine="standard">STANDARD 18</button>
+          <button class="control wine-mode" type="button" data-wine="professional">PRO 20</button>
+          <button class="control wine-mode" type="button" data-wine="all">ALL 38</button>
+        </div>
+        <button class="control" id="hintToggle" type="button" aria-pressed="false">CHEMISTRY HINT: OFF</button>
+      </div>
+      <div class="stats"><span>VISIBLE <b id="visibleCount">19</b></span><span>EXPLORED <b id="discoveredMini">0</b></span></div>
+    </div>
+    <div class="family-banner" id="familyBanner"><span id="familyText"></span><button id="clearFamily" type="button">CLEAR FILTER ×</button></div>
+    <div class="cards" id="cards"></div>
+
+    <section class="progress-panel" aria-labelledby="trail-title">
+      <div class="progress-copy"><div class="section-kicker">YOUR DISCOVERY TRAIL</div><h2 id="trail-title">酒をまたぐ分子を<br>何個見つけた？</h2><p>同じ分子が別の酒にも現れる。カードをめくって関係を見つけた分子を、この端末に記録します。</p></div>
+      <div class="progress-data"><div class="progress-num"><span id="crossFound">0</span><span class="progress-total"> / <span id="crossTotal">0</span></span></div><div class="progress-label">CROSS-DRINK MOLECULES EXPLORED</div><div class="meter"><i id="meterBar"></i></div><button class="reset" id="resetProgress" type="button">RESET DISCOVERY LOG</button></div>
+    </section>
+
+    <section class="visual-index" aria-labelledby="visual-index-title">
+      <div class="visual-index-head"><div><div class="section-kicker">AROMA VISUAL INDEX / 60</div><h2 id="visual-index-title">香りを、60の絵で見る。</h2></div><p>分子の説明に使う完成版60アイコン。似た言葉でも、たくあんと漬物、コーンとコーンスープのように分けて視覚化しています。</p></div>
+      <div class="visual-grid" id="visualGrid"></div>
+    </section>
+
+    <section class="source-box"><strong>REFERENCE / DATA POLICY</strong><div><div>掲載対象は林純薬工業の官能評価標準試薬ページを基準に整理。清酒19種、焼酎・泡盛20種、ワイン38種（スタンダード18＋プロフェッショナル20）、ビール17種。香りのアイコンは学習用の代表イメージで、濃度・温度・酒のマトリクスによって感じ方は変わります。分子式ではなく、構造式を表示します。</div><div class="source-links"><a href="https://direct.hpc-j.co.jp/shop/pages/seishu.aspx" target="_blank" rel="noreferrer">SAKE SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation-shouchu-awamori.aspx" target="_blank" rel="noreferrer">SHOCHU SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation-wine.aspx" target="_blank" rel="noreferrer">WINE SOURCE ↗</a><a href="https://direct.hpc-j.co.jp/shop/pages/sensory_evalutation_beer.aspx" target="_blank" rel="noreferrer">BEER SOURCE ↗</a></div></div></section>
+  </div>
+</section>
 </main>
-<footer class="footer"><div class="wrap"><div><b>SAKE ART TOKYO</b><br/><small>FERMENTATION PLAYGROUND / AROMA LAB</small></div><small>LOOK → NOTICE → REVEAL → CONNECT</small></div></footer>
-<div class="toast" id="toast"></div>
+<footer class="footer"><div class="wrap"><div><b>SAKE ART TOKYO</b><br><small>FERMENTATION PLAYGROUND / AROMA LAB</small></div><small>NAME → AROMA → STRUCTURE → CONNECT</small></div></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script defer src="./app.js"></script>
 </body>
 </html>
