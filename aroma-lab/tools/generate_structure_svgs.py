@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import json
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -14,6 +15,17 @@ HEIGHT = 280
 CENTER_X = WIDTH / 2
 CENTER_Y = HEIGHT / 2
 CENTER_TOLERANCE = 0.25
+
+COLOR_SHORTCUTS = {
+    "#000000": "#000",
+    "#FF0000": "#f00",
+    "#0000FF": "#00f",
+    "#FFFF00": "#ff0",
+    "#00CC00": "#0c0",
+    "#7F7F7F": "#7f7f7f",
+    "#00CCCC": "#0cc",
+    "#FF7F00": "#f70",
+}
 
 
 def molecule_from_smiles(smiles: str, compound_id: str):
@@ -32,6 +44,67 @@ def molecule_from_smiles(smiles: str, compound_id: str):
     return mol
 
 
+def short_color(value):
+    if value is None:
+        return None
+    value = value.strip()
+    return COLOR_SHORTCUTS.get(value, value)
+
+
+def compact_svg(svg: str) -> str:
+    root = ET.fromstring(svg)
+    paths = []
+
+    for element in root.iter():
+        if element.tag.split("}")[-1] != "path":
+            continue
+
+        path_data = element.attrib.get("d")
+        if not path_data:
+            continue
+
+        attrs = [f"d={json.dumps(path_data)}"]
+        style = element.attrib.get("style", "")
+        fill = element.attrib.get("fill")
+        stroke = None
+        stroke_width = None
+
+        if style:
+            match = re.search(r"stroke:([^;]+)", style)
+            if match:
+                stroke = match.group(1)
+
+            match = re.search(r"stroke-width:([^;]+)", style)
+            if match:
+                stroke_width = match.group(1)
+
+            match = re.search(r"fill:([^;]+)", style)
+            if match and not fill:
+                fill = match.group(1)
+
+        fill = short_color(fill)
+        stroke = short_color(stroke)
+
+        if fill:
+            attrs.append(f"fill='{fill}'")
+        elif stroke:
+            attrs.append("fill='none'")
+
+        if stroke:
+            attrs.append(f"stroke='{stroke}'")
+
+        if stroke_width:
+            attrs.append(f"stroke-width='{stroke_width.replace('px', '')}'")
+
+        paths.append("<path " + " ".join(attrs) + "/>")
+
+    return (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 280'>"
+        + "".join(paths)
+        + "</svg>"
+    )
+
+
 def draw_svg(smiles: str, compound_id: str) -> str:
     mol = molecule_from_smiles(smiles, compound_id)
     rdDepictor.Compute2DCoords(mol, canonOrient=True)
@@ -46,12 +119,7 @@ def draw_svg(smiles: str, compound_id: str) -> str:
 
     drawer.DrawMolecule(mol)
     drawer.FinishDrawing()
-    svg = drawer.GetDrawingText()
-    svg = svg.replace(
-        "<?xml version='1.0' encoding='iso-8859-1'?>",
-        "<?xml version='1.0' encoding='UTF-8'?>",
-    )
-    return re.sub(r"<rect[^>]*width=['\"]100%['\"][^>]*/>\s*", "", svg)
+    return compact_svg(drawer.GetDrawingText())
 
 
 def drawing_bbox(svg: str):
@@ -109,6 +177,7 @@ def assert_centered(svg: str, compound_id: str):
         raise ValueError(
             f"{compound_id}: horizontal bbox center {center_x:.2f} != {CENTER_X:.2f}"
         )
+
     if abs(center_y - CENTER_Y) > CENTER_TOLERANCE:
         raise ValueError(
             f"{compound_id}: vertical bbox center {center_y:.2f} != {CENTER_Y:.2f}"
