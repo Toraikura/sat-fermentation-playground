@@ -1,5 +1,6 @@
 (() => {
   const IMAGE_BASE = './assets/aroma-lab/master/';
+  const FINE_POINTER = window.matchMedia ? window.matchMedia('(hover:hover) and (pointer:fine)') : {matches:false};
 
   const AROMA_BY_COMPOUND = {
     'ethyl-acetate':['aroma-glue-remover'],
@@ -87,6 +88,22 @@
     }).join('')}</div>`;
   }
 
+  function clearTransientHover(card) {
+    card.classList.remove('hover-revealed');
+    delete card.dataset.hoverSuppressed;
+  }
+
+  function bindHoverState(card) {
+    card.addEventListener('pointerenter', () => {
+      if (!FINE_POINTER.matches || card.classList.contains('pinned') || card.dataset.hoverSuppressed === '1') return;
+      card.classList.add('hover-revealed');
+    });
+
+    const leave = () => clearTransientHover(card);
+    card.addEventListener('pointerleave', leave);
+    card.addEventListener('pointercancel', leave);
+  }
+
   function bindNewControls(card, compound) {
     card.querySelectorAll('[data-jump]').forEach(button => {
       button.onclick = event => {
@@ -101,6 +118,7 @@
         setTimeout(() => {
           const target = document.getElementById(`compound-${id}`);
           if (!target) return;
+          clearTransientHover(target);
           target.scrollIntoView({behavior:'smooth', block:'center'});
           target.classList.add('revealed','pinned');
           target.setAttribute('aria-expanded','true');
@@ -123,8 +141,21 @@
       if (fallback) fallback.style.display = 'grid';
     };
 
+    bindHoverState(card);
+
     card.addEventListener('click', () => {
-      requestAnimationFrame(() => card.setAttribute('aria-expanded', String(card.classList.contains('revealed'))));
+      requestAnimationFrame(() => {
+        const revealed = card.classList.contains('revealed');
+        card.setAttribute('aria-expanded', String(revealed));
+
+        if (revealed) {
+          clearTransientHover(card);
+          return;
+        }
+
+        card.classList.remove('hover-revealed');
+        if (FINE_POINTER.matches) card.dataset.hoverSuppressed = '1';
+      });
     });
   }
 
