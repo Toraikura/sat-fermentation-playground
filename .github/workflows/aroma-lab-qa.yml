@@ -1,0 +1,46 @@
+name: AROMA LAB browser QA
+
+on:
+  push:
+    branches:
+      - aroma-lab-structure-audit
+    paths:
+      - 'aroma-lab/**'
+      - '.github/workflows/aroma-lab-qa.yml'
+  workflow_dispatch:
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium webkit
+
+      - name: Run AROMA LAB QA
+        run: |
+          mkdir -p qa-artifacts
+          python3 -m http.server 4173 > /tmp/aroma-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          sleep 2
+          node aroma-lab/tools/qa_browser.mjs
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aroma-lab-browser-qa
+          path: qa-artifacts/
+          if-no-files-found: ignore
