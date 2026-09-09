@@ -1,0 +1,64 @@
+name: Sync AROMA LAB icons from Drive v2
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.sync-aroma-icons-v2
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+
+      - name: Download and validate one probe image
+        id: probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p aroma-lab/.probe
+          curl -fL --retry 2 --retry-delay 1 \
+            "https://drive.usercontent.google.com/download?id=1HfnLmzenMwQhhQldSgkWThA8QonA88Pg&export=download&confirm=t" \
+            -o aroma-lab/.probe/aroma-banana.png
+          sig=$(head -c 8 aroma-lab/.probe/aroma-banana.png | od -An -tx1 | tr -d ' \n')
+          test "$sig" = "89504e470d0a1a0a"
+          bytes=$(wc -c < aroma-lab/.probe/aroma-banana.png | tr -d ' ')
+          test "$bytes" -gt 100000
+
+      - name: Write probe status and commit
+        if: always()
+        shell: bash
+        env:
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
+        run: |
+          set -euo pipefail
+          {
+            echo "# AROMA LAB Drive sync probe"
+            echo
+            echo "probe_outcome: ${PROBE_OUTCOME}"
+            if [ -f aroma-lab/.probe/aroma-banana.png ]; then
+              echo "downloaded_bytes: $(wc -c < aroma-lab/.probe/aroma-banana.png | tr -d ' ')"
+              echo "signature: $(head -c 8 aroma-lab/.probe/aroma-banana.png | od -An -tx1 | tr -d ' \n')"
+              echo "content_type: $(file -b --mime-type aroma-lab/.probe/aroma-banana.png || true)"
+            else
+              echo "downloaded_bytes: 0"
+              echo "signature: none"
+              echo "content_type: none"
+            fi
+          } > aroma-lab/DRIVE_SYNC_PROBE.md
+          rm -rf aroma-lab/.probe
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add aroma-lab/DRIVE_SYNC_PROBE.md
+          git commit -m "chore: record AROMA LAB Drive sync probe" || true
+          git push origin HEAD:aroma-lab-60-icons
