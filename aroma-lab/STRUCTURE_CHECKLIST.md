@@ -7,10 +7,12 @@ Updated: 2026-09-09
 
 - Ledger fixed: **51/51**
 - RDKit SVG generated: **51/51**
-- Bounding-box center QA: **51/51 pass**
+- Generated SVG geometry center QA: **51/51 pass in generator workflow**
 - Special-seven policy: **7/7 resolved**
 - Hand-drawn legacy SVGs used: **0**
-- Remaining: UI wiring / card bug / device verification / `gh-pages` deployment
+- Local SVG runtime wiring: **done** (`./assets/structures/<id>.svg`)
+- Dedicated 51-SVG visual QA page: **added** (`structure-preview.html`)
+- Remaining: visual inspection / integration centering / clove flip-back bug / iPhone + desktop verification / `gh-pages` deployment
 
 ## Status legend
 
@@ -78,4 +80,6 @@ Updated: 2026-09-09
 
 ## Integration gate
 
-Do not use per-card PubChem PNG position hacks. The next UI pass must use only `assets/structures/<id>.svg`, then validate the stable local assets in the actual card DOM on iPhone portrait and desktop.
+Do not use per-card PubChem PNG position hacks or manually drawn chain fragments. Runtime structure images must remain local `assets/structures/<id>.svg` files. Visual corrections should be global SVG/card layout rules unless the molecular graph itself is wrong.
+
+Before deployment, inspect `structure-preview.html` and then the actual AROMA LAB cards on iPhone portrait and desktop.
