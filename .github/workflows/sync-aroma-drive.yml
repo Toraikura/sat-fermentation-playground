@@ -1,0 +1,142 @@
+name: Sync AROMA LAB icons from Drive
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.sync-aroma-icons
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+
+      - name: Download 60 PNG masters from Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="aroma-lab/assets/aroma-lab"
+          master="$target/master"
+          web="$target/web"
+          rm -rf "$master" "$web"
+          mkdir -p "$master" "$web"
+
+          download_drive() {
+            local name="$1" id="$2" out="$master/$name"
+            curl -fL --retry 3 --retry-delay 2 \
+              "https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t" \
+              -o "$out"
+            sig=$(head -c 8 "$out" | od -An -tx1 | tr -d ' \n')
+            if [ "$sig" != "89504e470d0a1a0a" ]; then
+              echo "Not a PNG: $name" >&2
+              exit 1
+            fi
+          }
+
+          while IFS='|' read -r name id; do
+            [ -z "$name" ] && continue
+            download_drive "$name" "$id"
+          done <<'FILES'
+          aroma-banana.png|1HfnLmzenMwQhhQldSgkWThA8QonA88Pg
+          aroma-apple-red.png|1JJvYKI1yzbb_0oQ-82ISHXu3A41ZqQmS
+          aroma-apple-green.png|1g9CroffamE_L9YwEK2Z7xuY6ivKn-Khr
+          aroma-strawberry-candy.png|1C5f-u7XqvqNa7PxtU7pqjRAyVZSj3Uo9
+          aroma-grapefruit.png|1D77jhyPP0ugEZmFUn6XIB5Bw-_6A4TtO
+          aroma-rose.png|1cZ-qhX7g1U_bI7UmzT5gcEWuONM6iGHz
+          aroma-violet.png|1RI_6EZ6d0M2Ylu1CJoqnjHvI6clHuHSs
+          aroma-lavender.png|1K8ajsmtJeV0XTZ89ZJM9r_zyNynFCnwt
+          aroma-sweet-flower.png|1haIPwZD3g5DK_07rUZtW-2zofNJVfOeu
+          aroma-honey.png|1lRA42zxbX7_EvNdetEptmwD_0gnwTj_M
+          aroma-vanilla.png|1obyCjzFkfy2D6dsI3rhXwO0FcYkTpWfa
+          aroma-clove.png|1SmkV1JRC1hCOGklBo0e8IlCsAP7SvGdV
+          aroma-spice.png|1RNBx4z00UXedl1ykPY5RsnBMSZxc5obI
+          aroma-caramel.png|17brU8r7xP6wxWSbhBGkcneO2Zi2nXsfe
+          aroma-nuts.png|1EgAD8yWs8QIbzb0k-gY2sIVXgMZ2Yt_4
+          aroma-fermented-butter.png|1S4tr0qX1Ue3CUhRo0Ma0eytuRMzoABDk
+          aroma-yogurt.png|1Gx7g7AwCldQFCx8ZZA4YJS1OOLiCu30I
+          aroma-cheese.png|1K7UUD-Xj9xD1Nzx8r1JlCO_O2J3IPEB5
+          aroma-mushroom.png|1uDjRLW4KFuJUiP37apNkZtjG6epF2daF
+          aroma-ginkgo-nut.png|18Jj8krAlEyx0g0O51s2-PeEJcqEbPQ-K
+          aroma-oak-barrel.png|1w9gyrLuuShUQyu6PvkB5WOhvgdZIepyr
+          aroma-grass.png|1DjjvuSvpuHKevRKKrLtj6vBqUe9q7piR
+          aroma-young-green-leaves.png|1U4kv8eJ8xvtjFE06Vhy6L_elHvnMYqGy
+          aroma-green-pepper.png|1-URlA-KsaBH7fCYci_WZodbGwmSBNcqN
+          aroma-aonori.png|1KFoJWIAkA5uo9oLA1NCzoC1XIL-UIWB2
+          aroma-alcohol-sake.png|1uYcYeCvdmyHBQ5Ej9fWAKiYa0A9m-v-K
+          aroma-vinegar.png|1DLtYIJYcN2oL1O50sJsV7UEfa5gIm51m
+          aroma-glue-remover.png|1CUP4bK06wf0kUKhi7rcvxdfP9SUOzUcc
+          aroma-whiteboard-marker.png|1TVHnURokImXNAJ4gbNesVCXVeOHyfqlR
+          aroma-solvent.png|14lTalzNiOUj-nLUwcpJigm3Zchox1Ayw
+          aroma-ink.png|10hb-_B1wjX1CnP2KGZMq53mKGidy7Shm
+          aroma-soap.png|1suKiwMGXCoflMOGu2e_9FFctecl2K4SB
+          aroma-cooking-oil.png|1laM7kxKi0k6PhsaHaAydIyBq_eGB03pW
+          aroma-resin.png|1WwxFlEwXY5BJFd4EZWmM4etaavZ-EjMF
+          aroma-plastic.png|13ltCRFojtTNsSb753nmcNZSAj3fvVM_Y
+          aroma-smoke.png|1vrpTL5u0gcZKLpswUNgg3QdQxWWFmdQG
+          aroma-smoked.png|1erm-OzJdFSnu2Ktfuhz-w-M-1upaeNMb
+          aroma-smoky-charred.png|1uZ5seVil5aUk3eYQ4Zs5AfSAlf-4_PL2
+          aroma-match-sulfite.png|1irM8pOPYN2lv3AsxPJRKs5Ahd-qxMtpj
+          aroma-gas.png|1ZXMTjhpe-gvUkKdRCFjBsZ2pRD95kYLk
+          aroma-onion.png|1HDWocB0rO4CuKeo1Hk9VRay-VRNLzVF1
+          aroma-rotten-egg.png|1J_5Yf9xjtCQSKU2LTMsyEA2DK8lcuAp-
+          aroma-mold.png|1cf5gQtgk-pHT0kLi80qqGg4-_h50g4v_
+          aroma-cork.png|1CY4cRmAsx1hdNVgCZ9ZNkPoQSYUzwRjI
+          aroma-cardboard-old-paper.png|1ckrhLt7LkwyNHQ97kehfB-qzj9wSbBQv
+          aroma-kerosene.png|1utMamBHMKPyH-RGY2Iqr8H-ZIldLcdm-
+          aroma-phenol.png|1p0rwmTRBuf5b-fV3VEFM6bvv-lB6spWe
+          aroma-green-aldehydic.png|1Uk1KeV04IqlNQ3YkXFU465IvHxntifzd
+          aroma-mureka-musty-steam.png|1eVy7yDnqopz-eS0hET0EYIPJNyH-a6i1
+          aroma-sweat.png|19R7lT_t4gcOvYRBpF86twJmIPEv8ehci
+          aroma-stable-animal.png|1Yio2RAEw5_wNPzaz8xh4SbaAu5Szlhsw
+          aroma-mouse.png|15wvKoxTbj6a86LWKrj5snBKZJXUNFqk8
+          aroma-soil.png|1QTfefeAjzSwW3nr2htl3Q3i8wP7lSvxx
+          aroma-skunk.png|1_GC124b7dAk-piJyEnm0cciFJh_S8dm3
+          aroma-cabbage.png|1RA79cB3iXtHIKoPcTTPwJmbVyxtij7XK
+          aroma-corn.png|1watYL3HqjM6sEGLu7xcXTTbnolKauVLr
+          aroma-corn-soup.png|1FSsRh2UYYt16VOq68JTw9MO9Rksl5tEo
+          aroma-takuan.png|1V9kV5dfskivJ-e2_41TZ3NOh5-QLuSM1
+          aroma-pickles.png|16pjVDZ8PbVYa9nvhfIHMjqlTC4fErVrD
+          aroma-natto.png|1AuuorKGPSjVCMDpUylrMcUR0Rbnt8Fux
+          FILES
+
+          count=$(find "$master" -maxdepth 1 -type f -name 'aroma-*.png' | wc -l | tr -d ' ')
+          test "$count" = "60"
+
+      - name: Generate lightweight WebP delivery copies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq webp
+          master="aroma-lab/assets/aroma-lab/master"
+          web="aroma-lab/assets/aroma-lab/web"
+          mkdir -p "$web"
+          for f in "$master"/aroma-*.png; do
+            base=$(basename "$f" .png)
+            cwebp -quiet -q 72 -resize 160 160 "$f" -o "$web/$base.webp"
+          done
+          count=$(find "$web" -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')
+          test "$count" = "60"
+
+      - name: Clean staging transfer and commit assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf aroma-lab/assets/aroma-lab/_transfer
+          rm -f aroma-lab/.sync-aroma-icons
+          rm -f .github/workflows/unpack-aroma-assets.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A aroma-lab/assets/aroma-lab aroma-lab/.sync-aroma-icons .github/workflows/unpack-aroma-assets.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add AROMA LAB 60 icon assets"
+          git push origin HEAD:aroma-lab-60-icons
