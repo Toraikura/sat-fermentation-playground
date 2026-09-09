@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AROMA LAB — Structure QA Preview</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#161616;background:#f4f1ea}
+*{box-sizing:border-box}
+body{margin:0;padding:24px}
+header{max-width:1440px;margin:0 auto 20px;display:flex;gap:20px;align-items:end;justify-content:space-between;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(24px,3vw,40px);letter-spacing:-.03em}
+p{margin:6px 0 0;color:#666;max-width:800px;line-height:1.55}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{border:1px solid #bbb;background:#fff;padding:8px 12px;border-radius:999px;cursor:pointer}
+button.active{background:#111;color:#fff;border-color:#111}
+.grid{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #d8d4ca;border-radius:14px;overflow:hidden;min-width:0}
+.figure{height:190px;display:grid;place-items:center;padding:10px;background-image:linear-gradient(#eee 1px,transparent 1px),linear-gradient(90deg,#eee 1px,transparent 1px);background-size:20px 20px;background-position:center center;position:relative}
+.figure::before,.figure::after{content:"";position:absolute;background:#d6d6d6;pointer-events:none}
+.figure::before{width:1px;height:100%;left:50%;top:0}
+.figure::after{height:1px;width:100%;top:50%;left:0}
+.figure img{width:100%;height:100%;object-fit:contain;position:relative;z-index:1}
+.meta{padding:10px 12px 12px;border-top:1px solid #eee}
+.meta strong{display:block;font-size:14px;line-height:1.25}
+.meta span{display:block;margin-top:4px;font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#777}
+.bad{outline:3px solid #d22;outline-offset:-3px}
+.small .figure{height:140px}
+.large .figure{height:260px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>AROMA LAB — 51 Structure QA</h1>
+    <p>RDKit生成済みローカルSVGの一覧検品用。中央の十字はSVGビューポート中央。分子の見かけ中心、OH/HO・SH/HS、E/Z・楔、長鎖の可読性、欠損を確認する。</p>
+  </div>
+  <div class="controls">
+    <button data-size="small">SMALL</button>
+    <button data-size="normal" class="active">NORMAL</button>
+    <button data-size="large">LARGE</button>
+  </div>
+</header>
+<main class="grid" id="grid"></main>
+<script>
+const compounds = [
+['ethyl-acetate','Ethyl acetate'],['isoamyl-acetate','Isoamyl acetate'],['ethyl-hexanoate','Ethyl hexanoate'],['ethanol','Ethanol'],['isoamyl-alcohol','3-Methyl-1-butanol'],['phenethyl-alcohol','2-Phenylethanol'],['acetaldehyde','Acetaldehyde'],['isovaleraldehyde','3-Methylbutanal'],['4vg','4-Vinylguaiacol'],['sotolon','Sotolon'],['ethanethiol','Ethanethiol'],['dms','Dimethyl sulfide'],['dmts','Dimethyl trisulfide'],['tca246','2,4,6-Trichloroanisole'],['diacetyl','Diacetyl / 2,3-butanedione'],['hexanoic-acid','Hexanoic acid'],['acetic-acid','Acetic acid'],['butyric-acid','Butyric acid'],['isovaleric-acid','Isovaleric acid'],['linalool','Linalool'],['beta-damascenone','β-Damascenone'],['vanillin','Vanillin'],['edmp','2-Ethyl-3,5-dimethylpyrazine'],['furfural','Furfural'],['ethyl-laurate','Ethyl laurate'],['octenol','1-Octen-3-ol'],['furaneol','Furaneol / HDMF'],['ibmp','2-Isobutyl-3-methoxypyrazine'],['3mh','3-Mercaptohexan-1-ol / 3MH'],['beta-ionone','β-Ionone'],['tdn','TDN'],['4vp','4-Vinylphenol'],['4eg','4-Ethylguaiacol'],['2ap','2-Acetyl-1-pyrroline'],['so2','Sulfur dioxide'],['eugenol','Eugenol'],['hexadienol','trans,trans-2,4-Hexadien-1-ol'],['cis3hexenol','cis-3-Hexen-1-ol'],['geraniol','Geraniol'],['isobutanol','Isobutanol'],['h2s','Hydrogen sulfide'],['4ep','4-Ethylphenol'],['athp','2-Acetyl-3,4,5,6-tetrahydropyridine'],['geosmin','Geosmin'],['styrene','Styrene'],['guaiacol','Guaiacol'],['tca236','2,3,6-Trichloroanisole'],['3mbt','3-Methyl-2-buten-1-thiol'],['trans2nonenal','trans-2-Nonenal'],['citronellol','Citronellol'],['dcp26','2,6-Dichlorophenol']
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=compounds.map(([id,name],i)=>`<article class="card"><div class="figure"><img loading="lazy" src="./assets/structures/${encodeURIComponent(id)}.svg" alt="${name} structure" onerror="this.closest('.card').classList.add('bad');this.alt='MISSING SVG'"></div><div class="meta"><strong>${String(i+1).padStart(2,'0')} / ${name}</strong><span>${id}.svg</span></div></article>`).join('');
+document.querySelectorAll('[data-size]').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('[data-size]').forEach(x=>x.classList.toggle('active',x===button));
+  document.body.classList.remove('small','large');
+  if(button.dataset.size!=='normal')document.body.classList.add(button.dataset.size);
+}));
+</script>
+</body>
+</html>
