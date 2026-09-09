@@ -5,7 +5,7 @@ on:
     branches:
       - aroma-lab-60-icons
     paths:
-      - aroma-lab/assets/aroma-lab/aroma-web-512.tar.gz
+      - aroma-lab/assets/aroma-lab/_transfer/aroma-web-512.tar.b64.part16
 
 permissions:
   contents: write
@@ -20,18 +20,22 @@ jobs:
           ref: aroma-lab-60-icons
           fetch-depth: 0
 
-      - name: Unpack web delivery assets
+      - name: Decode and unpack web delivery assets
         shell: bash
         run: |
           set -euo pipefail
-          archive="aroma-lab/assets/aroma-lab/aroma-web-512.tar.gz"
+          transfer="aroma-lab/assets/aroma-lab/_transfer"
+          archive="$RUNNER_TEMP/aroma-web-512.tar.gz"
           target="aroma-lab/assets/aroma-lab"
-          test -f "$archive"
+          count_parts=$(find "$transfer" -maxdepth 1 -type f -name 'aroma-web-512.tar.b64.part*' | wc -l | tr -d ' ')
+          test "$count_parts" = "16"
+          cat "$transfer"/aroma-web-512.tar.b64.part* | base64 --decode > "$archive"
+          echo "1f02194f9c9df2fb6a8c685ab812f062acd57892b7fa5d0aa4b939d9590314c0  $archive" | sha256sum -c -
           mkdir -p "$target"
           tar -xzf "$archive" -C "$target"
           count=$(find "$target/web" -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')
           test "$count" = "60"
-          rm "$archive"
+          rm -rf "$transfer"
 
       - name: Commit extracted assets
         shell: bash
