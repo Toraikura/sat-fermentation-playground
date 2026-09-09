@@ -154,7 +154,8 @@
         }
 
         card.classList.remove('hover-revealed');
-        if (FINE_POINTER.matches) card.dataset.hoverSuppressed = '1';
+        if (FINE_POINTER.matches && card.matches(':hover')) card.dataset.hoverSuppressed = '1';
+        else delete card.dataset.hoverSuppressed;
       });
     });
   }
