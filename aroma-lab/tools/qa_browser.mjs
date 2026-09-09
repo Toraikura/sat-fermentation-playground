@@ -166,13 +166,16 @@ async function testDesktop() {
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'hover must not pin/expand aria state');
 
   await card.click();
-  await page.waitForFunction(() => document.querySelector('#compound-4vg')?.classList.contains('revealed'));
+  await page.waitForFunction(() => {
+    const card = document.querySelector('#compound-4vg');
+    return card?.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'true';
+  });
   assert.equal(await card.getAttribute('aria-expanded'), 'true', 'first click should pin 4VG open');
 
   await card.click();
   await page.waitForFunction(() => {
     const card = document.querySelector('#compound-4vg');
-    return card && !card.classList.contains('revealed') && !card.classList.contains('hover-revealed');
+    return card && !card.classList.contains('revealed') && !card.classList.contains('hover-revealed') && card.getAttribute('aria-expanded') === 'false';
   });
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'second click should close 4VG');
   assert.equal(await inner.evaluate(el => getComputedStyle(el).transform), 'none', '4VG must visibly return to front while pointer is still over the card');
@@ -206,11 +209,17 @@ async function testIPhone() {
 
   const card = page.locator('#compound-4vg');
   await card.tap();
-  await page.waitForFunction(() => document.querySelector('#compound-4vg')?.classList.contains('revealed'));
+  await page.waitForFunction(() => {
+    const card = document.querySelector('#compound-4vg');
+    return card?.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'true';
+  });
   assert.equal(await card.getAttribute('aria-expanded'), 'true', 'iPhone first tap should reveal 4VG');
 
   await card.tap();
-  await page.waitForFunction(() => !document.querySelector('#compound-4vg')?.classList.contains('revealed'));
+  await page.waitForFunction(() => {
+    const card = document.querySelector('#compound-4vg');
+    return card && !card.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'false';
+  });
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'iPhone second tap should close 4VG');
   assert.equal(await card.evaluate(el => el.classList.contains('hover-revealed')), false, 'touch mode must not leave a hover-revealed state');
 
