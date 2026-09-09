@@ -39,6 +39,17 @@ async function waitForCards(page, expected) {
   );
 }
 
+async function waitForFrontTransform(page, id) {
+  await page.waitForFunction(compoundId => {
+    const inner = document.querySelector(`#compound-${compoundId} .card-inner`);
+    if (!inner) return false;
+    const transform = getComputedStyle(inner).transform;
+    return transform === 'none' ||
+      transform === 'matrix(1, 0, 0, 1, 0, 0)' ||
+      transform === 'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)';
+  }, id, { timeout: 1600 });
+}
+
 async function visibleIds(page) {
   return page.locator('#cards .card').evaluateAll(cards => cards.map(card => card.dataset.id));
 }
@@ -159,7 +170,6 @@ async function testDesktop() {
   await page.locator('[data-tab="sake"]').click();
   await waitForCards(page, EXPECTED_COUNTS.sake);
   const card = page.locator('#compound-4vg');
-  const inner = card.locator('.card-inner');
 
   await card.hover();
   await page.waitForFunction(() => document.querySelector('#compound-4vg')?.classList.contains('hover-revealed'));
@@ -177,8 +187,8 @@ async function testDesktop() {
     const card = document.querySelector('#compound-4vg');
     return card && !card.classList.contains('revealed') && !card.classList.contains('hover-revealed') && card.getAttribute('aria-expanded') === 'false';
   });
+  await waitForFrontTransform(page, '4vg');
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'second click should close 4VG');
-  assert.equal(await inner.evaluate(el => getComputedStyle(el).transform), 'none', '4VG must visibly return to front while pointer is still over the card');
 
   await page.mouse.move(10, 10);
   await card.hover();
@@ -220,6 +230,7 @@ async function testIPhone() {
     const card = document.querySelector('#compound-4vg');
     return card && !card.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'false';
   });
+  await waitForFrontTransform(page, '4vg');
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'iPhone second tap should close 4VG');
   assert.equal(await card.evaluate(el => el.classList.contains('hover-revealed')), false, 'touch mode must not leave a hover-revealed state');
 
