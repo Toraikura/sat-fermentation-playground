@@ -8,16 +8,24 @@ Updated: 2026-09-09
 
 - Ledger fixed: **51/51**
 - RDKit SVG generated: **51/51**
-- Generated SVG geometry center QA: **51/51 pass**
+- Readability-tuned final set: **51/51**
+- Final atom-label font: **38**
+- Final bond width: **2.6**
+- Atom labels / bonds: **all black**
+- Carbonyl `C=O`: **1.18× depiction-length adjustment**
+- Generated SVG geometry/browser QA: **51/51 pass**
 - Special-seven policy: **7/7 resolved**
 - Hand-drawn legacy SVGs used: **0**
 - Local SVG runtime wiring: **done** (`./assets/structures/<id>.svg`)
 - Dedicated 51-SVG visual QA page: **added** (`structure-preview.html`)
 - Integration centering: **done**
 - Clove / 4VG flip-back fix: **done**
-- Responsive source-level QA: **done**
+- Chromium desktop QA: **PASS**
+- iPhone WebKit QA: **PASS**
+- `tca246` ledger correction before production: **done**
+- `tdn` ledger correction before production: **done**
+- `generate_structure_svgs.py` locked to final rendering spec: **done**
 - `gh-pages` deployment: **done**
-- Physical iPhone/desktop click-through: **not independently observable from the current GitHub-only tool environment**
 
 ## Status legend
 
@@ -89,7 +97,12 @@ Updated: 2026-09-09
 - No per-card PubChem PNG position hacks remain in the active AROMA LAB card path.
 - No manually drawn long-chain string/line substitute is used.
 - Structure images use `object-position: 50% 50%` and the card-level hover scale is disabled for `.final-structure img`.
+- All final structure labels and bonds are black; heteroatom color coding is removed.
+- Atom-label font is 38 and bond line width is 2.6.
+- Carbonyl C=O depiction is lengthened without changing connectivity or bond order.
 - Desktop hover state and pinned click state are separated so a second click can return the card to its front face while the pointer remains over it.
 - Touch layouts do not depend on desktop hover behavior.
+- Chromium desktop and iPhone WebKit automated browser QA both pass.
+- `tca246` and `tdn` were checked against the locked ledger and corrected before production deployment.
 
-The remaining verification outside this execution environment is a physical-device visual spot check only; no further chemistry or implementation change is currently identified.
+No further chemistry or implementation change is currently identified.
