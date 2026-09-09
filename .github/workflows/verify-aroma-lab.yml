@@ -1,0 +1,125 @@
+name: Verify AROMA LAB branch
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.verify-aroma-lab
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+
+      - name: Static and asset checks
+        id: static
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check aroma-lab/app.js
+          master_count=$(find aroma-lab/assets/aroma-lab/master -maxdepth 1 -type f -name 'aroma-*.png' | wc -l | tr -d ' ')
+          web_count=$(find aroma-lab/assets/aroma-lab/web -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')
+          ref_count=$(grep -oE "aroma-[a-z0-9-]+\.webp" aroma-lab/app.js | sort -u | wc -l | tr -d ' ')
+          test "$master_count" = "60"
+          test "$web_count" = "60"
+          test "$ref_count" = "60"
+          while read -r icon; do test -f "aroma-lab/assets/aroma-lab/web/$icon"; done < <(grep -oE "aroma-[a-z0-9-]+\.webp" aroma-lab/app.js | sort -u)
+          echo "master_count=$master_count" >> "$GITHUB_OUTPUT"
+          echo "web_count=$web_count" >> "$GITHUB_OUTPUT"
+          echo "ref_count=$ref_count" >> "$GITHUB_OUTPUT"
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          npx playwright install --with-deps chromium >/dev/null
+
+      - name: Browser QA
+        id: browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd aroma-lab
+          python3 -m http.server 8765 >/tmp/aroma-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 1
+          cat > "$RUNNER_TEMP/aroma-qa.js" <<'JS'
+          const { chromium } = require(process.env.RUNNER_TEMP + '/node_modules/playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const sizes=[[390,844],[430,932],[768,1024],[1440,1000]];
+            const lines=[];
+            for(const [width,height] of sizes){
+              const page=await browser.newPage({viewport:{width,height}});
+              const errors=[];
+              page.on('pageerror',e=>errors.push(String(e)));
+              page.on('console',m=>{if(m.type()==='error') errors.push(m.text())});
+              await page.route('https://pubchem.ncbi.nlm.nih.gov/**',r=>r.abort());
+              await page.goto('http://127.0.0.1:8765/',{waitUntil:'networkidle'});
+              const sake=await page.locator('.card').count();
+              if(sake!==19) throw new Error(`SAKE count ${sake}`);
+              const visuals=await page.locator('.visual-tile').count();
+              if(visuals!==60) throw new Error(`visual index ${visuals}`);
+              const unique=await page.locator('.visual-tile img').evaluateAll(els=>new Set(els.map(e=>e.getAttribute('src'))).size);
+              if(unique!==60) throw new Error(`unique visuals ${unique}`);
+              const broken=await page.locator('.aroma-visual img,.visual-tile img,.hero-aroma img').evaluateAll(els=>els.filter(e=>!e.complete||e.naturalWidth===0).length);
+              if(broken!==0) throw new Error(`broken local images ${broken}`);
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+              if(overflow!==0) throw new Error(`horizontal overflow ${overflow}`);
+              const first=page.locator('.card').first(); await first.click();
+              if(await first.getAttribute('aria-expanded')!=='true') throw new Error('tap flip failed');
+              await page.locator('[data-tab="shochu"]').click(); if(await page.locator('.card').count()!==20) throw new Error('shochu count');
+              await page.locator('[data-tab="wine"]').click(); if(await page.locator('.card').count()!==18) throw new Error('wine std count');
+              await page.locator('[data-wine="professional"]').click(); if(await page.locator('.card').count()!==20) throw new Error('wine pro count');
+              await page.locator('[data-wine="all"]').click(); if(await page.locator('.card').count()!==38) throw new Error('wine all count');
+              await page.locator('[data-tab="beer"]').click(); if(await page.locator('.card').count()!==17) throw new Error('beer count');
+              if(errors.length) throw new Error(`browser errors: ${errors.join(' | ')}`);
+              lines.push(`${width}x${height}: PASS`);
+              await page.close();
+            }
+            await browser.close();
+            require('fs').writeFileSync(process.env.RUNNER_TEMP+'/aroma-browser-qa.txt',lines.join('\n'));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+          RUNNER_TEMP="$RUNNER_TEMP" node "$RUNNER_TEMP/aroma-qa.js"
+
+      - name: Record successful QA and clean trigger
+        if: success()
+        shell: bash
+        env:
+          MASTER_COUNT: ${{ steps.static.outputs.master_count }}
+          WEB_COUNT: ${{ steps.static.outputs.web_count }}
+          REF_COUNT: ${{ steps.static.outputs.ref_count }}
+        run: |
+          set -euo pipefail
+          cat > aroma-lab/QA_STATUS.md <<EOF
+          # AROMA LAB QA
+
+          - PNG masters: ${MASTER_COUNT}
+          - WebP delivery assets: ${WEB_COUNT}
+          - Unique icon references: ${REF_COUNT}
+          - Browser sizes: 390x844, 430x932, 768x1024, 1440x1000
+          - SAKE / SHOCHU / WINE std / WINE pro / WINE all / BEER counts: 19 / 20 / 18 / 20 / 38 / 17
+          - Touch/click flip: PASS
+          - Local image loading: PASS
+          - Horizontal page overflow: PASS
+          - JavaScript/browser console errors: PASS
+          EOF
+          rm -f aroma-lab/.verify-aroma-lab
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A aroma-lab/QA_STATUS.md aroma-lab/.verify-aroma-lab
+          git commit -m "test: verify AROMA LAB icon integration" || true
+          git push origin HEAD:aroma-lab-60-icons
