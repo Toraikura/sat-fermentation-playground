@@ -1,18 +1,23 @@
 # AROMA LAB — 51 Structure Final Asset Checklist
 
 Branch: `aroma-lab-structure-audit`  
+Production: `gh-pages`  
 Updated: 2026-09-09
 
 ## Summary
 
 - Ledger fixed: **51/51**
 - RDKit SVG generated: **51/51**
-- Generated SVG geometry center QA: **51/51 pass in generator workflow**
+- Generated SVG geometry center QA: **51/51 pass**
 - Special-seven policy: **7/7 resolved**
 - Hand-drawn legacy SVGs used: **0**
 - Local SVG runtime wiring: **done** (`./assets/structures/<id>.svg`)
 - Dedicated 51-SVG visual QA page: **added** (`structure-preview.html`)
-- Remaining: visual inspection / integration centering / clove flip-back bug / iPhone + desktop verification / `gh-pages` deployment
+- Integration centering: **done**
+- Clove / 4VG flip-back fix: **done**
+- Responsive source-level QA: **done**
+- `gh-pages` deployment: **done**
+- Physical iPhone/desktop click-through: **not independently observable from the current GitHub-only tool environment**
 
 ## Status legend
 
@@ -78,8 +83,13 @@ Updated: 2026-09-09
 |50|`citronellol`|Citronellol|NO_WEDGE|PASS|PASS|PASS|
 |51|`dcp26`|2,6-Dichlorophenol|PASS|PASS|PASS|PASS|
 
-## Integration gate
+## Integration gate — final state
 
-Do not use per-card PubChem PNG position hacks or manually drawn chain fragments. Runtime structure images must remain local `assets/structures/<id>.svg` files. Visual corrections should be global SVG/card layout rules unless the molecular graph itself is wrong.
+- Runtime uses only local `assets/structures/<id>.svg` structure assets.
+- No per-card PubChem PNG position hacks remain in the active AROMA LAB card path.
+- No manually drawn long-chain string/line substitute is used.
+- Structure images use `object-position: 50% 50%` and the card-level hover scale is disabled for `.final-structure img`.
+- Desktop hover state and pinned click state are separated so a second click can return the card to its front face while the pointer remains over it.
+- Touch layouts do not depend on desktop hover behavior.
 
-Before deployment, inspect `structure-preview.html` and then the actual AROMA LAB cards on iPhone portrait and desktop.
+The remaining verification outside this execution environment is a physical-device visual spot check only; no further chemistry or implementation change is currently identified.
