@@ -5,7 +5,7 @@ on:
     branches:
       - aroma-lab-60-icons
     paths:
-      - aroma-lab/assets/aroma-lab/_transfer/aroma-web-512.tar.b64.part16
+      - aroma-lab/assets/aroma-lab/_transfer/aroma-web-192.tar.b64
 
 permissions:
   contents: write
@@ -25,12 +25,12 @@ jobs:
         run: |
           set -euo pipefail
           transfer="aroma-lab/assets/aroma-lab/_transfer"
-          archive="$RUNNER_TEMP/aroma-web-512.tar.gz"
+          encoded="$transfer/aroma-web-192.tar.b64"
+          archive="$RUNNER_TEMP/aroma-web-192.tar.gz"
           target="aroma-lab/assets/aroma-lab"
-          count_parts=$(find "$transfer" -maxdepth 1 -type f -name 'aroma-web-512.tar.b64.part*' | wc -l | tr -d ' ')
-          test "$count_parts" = "16"
-          cat "$transfer"/aroma-web-512.tar.b64.part* | base64 --decode > "$archive"
-          echo "1f02194f9c9df2fb6a8c685ab812f062acd57892b7fa5d0aa4b939d9590314c0  $archive" | sha256sum -c -
+          test -f "$encoded"
+          base64 --decode "$encoded" > "$archive"
+          echo "3b9b759f33b2502663934762be1921cf7f2fe11bcf6f12b49082fe77669a73f1  $archive" | sha256sum -c -
           mkdir -p "$target"
           tar -xzf "$archive" -C "$target"
           count=$(find "$target/web" -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')
