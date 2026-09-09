@@ -43,21 +43,6 @@
     flashTimer: null
   };
 
-  function signature(compound) {
-    return compound.aromaIds.slice().sort().join('|');
-  }
-
-  function uniqueBeginnerCandidates() {
-    const groups = new Map();
-    data.compounds.forEach(compound => {
-      const key = signature(compound);
-      const list = groups.get(key) || [];
-      list.push(compound);
-      groups.set(key, list);
-    });
-    return data.compounds.filter(compound => compound.aromaIds.length && groups.get(signature(compound)).length === 1);
-  }
-
   function shuffle(input) {
     const array = input.slice();
     for (let i = array.length - 1; i > 0; i -= 1) {
@@ -67,17 +52,56 @@
     return array;
   }
 
+  function canJoinRound(compound, usedAromas) {
+    return compound.aromaIds.length > 0 && compound.aromaIds.every(aromaId => !usedAromas.has(aromaId));
+  }
+
+  function findUniqueRound(candidates, seed = []) {
+    const selected = seed.slice();
+    const usedAromas = new Set(seed.flatMap(compound => compound.aromaIds));
+    const seedIds = new Set(seed.map(compound => compound.id));
+    const pool = shuffle(candidates.filter(compound => !seedIds.has(compound.id)));
+
+    function search(startIndex) {
+      if (selected.length === ROUND_SIZE) return selected.slice();
+      const needed = ROUND_SIZE - selected.length;
+      if (pool.length - startIndex < needed) return null;
+
+      for (let i = startIndex; i < pool.length; i += 1) {
+        const compound = pool[i];
+        if (!canJoinRound(compound, usedAromas)) continue;
+
+        selected.push(compound);
+        compound.aromaIds.forEach(aromaId => usedAromas.add(aromaId));
+        const result = search(i + 1);
+        if (result) return result;
+        selected.pop();
+        compound.aromaIds.forEach(aromaId => usedAromas.delete(aromaId));
+      }
+      return null;
+    }
+
+    return search(0);
+  }
+
   function chooseRound() {
-    const eligible = uniqueBeginnerCandidates();
-    if (eligible.length < ROUND_SIZE) throw new Error('Not enough unique BEGINNER pairs');
+    const candidates = data.compounds.filter(compound => compound.aromaIds.length > 0);
+    let round = null;
 
     if (state.roundIndex === 0) {
-      const priority = FIRST_ROUND_PRIORITY.map(id => compoundById.get(id)).filter(compound => compound && eligible.includes(compound));
-      const priorityIds = new Set(priority.map(compound => compound.id));
-      const extras = shuffle(eligible.filter(compound => !priorityIds.has(compound.id))).slice(0, ROUND_SIZE - priority.length);
-      return shuffle(priority.concat(extras));
+      const priority = FIRST_ROUND_PRIORITY.map(id => compoundById.get(id)).filter(Boolean);
+      const priorityAromas = new Set();
+      const validPriority = priority.every(compound => {
+        if (!canJoinRound(compound, priorityAromas)) return false;
+        compound.aromaIds.forEach(aromaId => priorityAromas.add(aromaId));
+        return true;
+      });
+      if (validPriority) round = findUniqueRound(candidates, priority);
     }
-    return shuffle(eligible).slice(0, ROUND_SIZE);
+
+    if (!round) round = findUniqueRound(candidates);
+    if (!round || round.length !== ROUND_SIZE) throw new Error('Could not build a unique BEGINNER round');
+    return shuffle(round);
   }
 
   function aromaCardFor(compound) {
@@ -103,11 +127,10 @@
   }
 
   function aromaButton(card) {
-    const first = aromaById.get(card.aromaIds[0]);
-    const extra = Math.max(0, card.aromaIds.length - 1);
-    const image = first ? `<img src="${first.image}" alt="${first.label}" loading="lazy" decoding="async" width="80" height="80">` : '';
+    const images = card.aromaIds.slice(0, 2).map(aromaId => aromaById.get(aromaId)).filter(Boolean);
+    const imageHtml = images.map(aroma => `<img src="${aroma.image}" alt="${aroma.label}" loading="lazy" decoding="async" width="80" height="80">`).join('');
     return `<button type="button" class="match-card aroma-card" data-side="right" data-aroma-card-id="${card.id}" data-owner-id="${card.acceptedCompoundIds[0]}" aria-pressed="false">
-      <span class="aroma-thumb">${image}${extra ? `<i>+${extra}</i>` : ''}</span>
+      <span class="aroma-thumb ${images.length > 1 ? 'multi' : ''}">${imageHtml}</span>
       <span class="aroma-copy"><strong>${card.label}</strong><small>AROMA CARD</small></span>
     </button>`;
   }
