@@ -1,6 +1,5 @@
 (() => {
-  const ASSET_BASE = './assets/aroma-lab/web/';
-  const MASTER_BASE = './assets/aroma-lab/master/';
+  const IMAGE_BASE = './assets/aroma-lab/master/';
 
   const AROMA_BY_COMPOUND = {
     'ethyl-acetate':['aroma-glue-remover'],
@@ -24,7 +23,7 @@
     'isovaleric-acid':['aroma-natto','aroma-sweat'],
     'linalool':['aroma-lavender'],
     'beta-damascenone':['aroma-honey'],
-    'vanillin':['aroma-vanilla'],
+    'vanillin':['aroma-vanilla','aroma-oak-barrel'],
     'edmp':['aroma-nuts'],
     'furfural':['aroma-smoke','aroma-smoky-charred'],
     'ethyl-laurate':['aroma-soap'],
@@ -66,96 +65,136 @@
     ['aroma-kerosene','灯油'],['aroma-phenol','フェノール'],['aroma-green-aldehydic','青臭い・アルデヒド系'],['aroma-mureka-musty-steam','ムレ香'],['aroma-sweat','汗'],['aroma-stable-animal','馬小屋・獣臭'],['aroma-mouse','ネズミ臭'],['aroma-soil','土'],['aroma-skunk','スカンク'],['aroma-cabbage','キャベツ']
   ];
 
-  function esc(s){return String(s).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}
-  function aromaImage(slug,label='香りのイメージ'){
-    return `<img class="final-aroma-img" loading="lazy" decoding="async" width="320" height="320" src="${ASSET_BASE}${slug}.webp" data-master="${MASTER_BASE}${slug}.png" alt="${esc(label)}">`;
-  }
-  function drinkRail(c){
-    const cats=[...new Set(c.apps.map(a=>a.drink))];
-    return `<div class="drink-rail hotfix-rail">${['sake','shochu','wine','beer'].map(d=>`<button class="drink-dot ${cats.includes(d)?'on':''}" data-jump="${d}" ${cats.includes(d)?'':'disabled'}><span>${DRINKS[d].label}</span></button>`).join('')}</div>`;
+  function esc(value) {
+    return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
   }
 
-  function bindNewControls(card,c){
-    card.querySelectorAll('[data-jump]').forEach(b=>b.onclick=e=>{
-      e.stopPropagation();
-      if(!b.classList.contains('on')) return;
-      const d=b.dataset.jump,id=card.dataset.id;
-      state.drink=d; state.family=null; if(d==='wine') state.wine='all';
+  function aromaImage(slug, label) {
+    return `<img class="final-aroma-img" loading="lazy" decoding="async" width="320" height="320" src="${IMAGE_BASE}${slug}.png" alt="${esc(label)}">`;
+  }
+
+  function applicationLabel(application) {
+    const no = String(application.no).padStart(2, '0');
+    if (application.drink !== 'wine') return no;
+    return `${application.set === 'standard' ? 'S' : 'P'}${no}`;
+  }
+
+  function drinkRail(compound) {
+    return `<div class="drink-rail final-drink-rail">${['sake','shochu','wine','beer'].map(drink => {
+      const refs = compound.apps.filter(item => item.drink === drink);
+      const enabled = refs.length > 0;
+      return `<button class="drink-ref ${enabled ? 'on' : ''}" data-jump="${drink}" ${enabled ? '' : 'disabled'}><span>${DRINKS[drink].label}</span><strong>${enabled ? refs.map(applicationLabel).join(' / ') : '—'}</strong></button>`;
+    }).join('')}</div>`;
+  }
+
+  function bindNewControls(card, compound) {
+    card.querySelectorAll('[data-jump]').forEach(button => {
+      button.onclick = event => {
+        event.stopPropagation();
+        if (!button.classList.contains('on')) return;
+        const drink = button.dataset.jump;
+        const id = card.dataset.id;
+        state.drink = drink;
+        state.family = null;
+        if (drink === 'wine') state.wine = 'all';
+        render();
+        setTimeout(() => {
+          const target = document.getElementById(`compound-${id}`);
+          if (!target) return;
+          target.scrollIntoView({behavior:'smooth', block:'center'});
+          target.classList.add('revealed','pinned');
+          target.setAttribute('aria-expanded','true');
+          discover(id);
+        }, 80);
+      };
+    });
+
+    const related = card.querySelector('[data-family]');
+    if (related) related.onclick = event => {
+      event.stopPropagation();
+      state.family = related.dataset.family;
       render();
-      setTimeout(()=>{
-        const target=document.getElementById('compound-'+id);
-        if(target){ target.scrollIntoView({behavior:'smooth',block:'center'}); target.classList.add('revealed','pinned'); discover(id); }
-      },80);
+    };
+
+    const structure = card.querySelector('.final-structure img');
+    if (structure) structure.onerror = () => {
+      structure.style.display = 'none';
+      const fallback = card.querySelector('.structure-fallback');
+      if (fallback) fallback.style.display = 'grid';
+    };
+
+    card.addEventListener('click', () => {
+      requestAnimationFrame(() => card.setAttribute('aria-expanded', String(card.classList.contains('revealed'))));
     });
-    const related=card.querySelector('[data-family]');
-    if(related) related.onclick=e=>{e.stopPropagation();state.family=related.dataset.family;render()};
-    card.querySelectorAll('.final-aroma-img').forEach(img=>{
-      img.onerror=()=>{ if(img.dataset.master && img.src!==new URL(img.dataset.master,location.href).href){ img.src=img.dataset.master; } };
-    });
-    const structure=card.querySelector('.hotfix-structure img');
-    if(structure) structure.onerror=()=>{structure.style.display='none';const f=card.querySelector('.hotfix-structure-fallback');if(f)f.style.display='grid'};
   }
 
-  function transformCard(card){
-    if(card.dataset.nameFirstReady==='1') return;
-    const c=byId[card.dataset.id];
-    if(!c) return;
-    card.dataset.nameFirstReady='1';
-    card.setAttribute('aria-label',`${c.ja}。操作すると構造式と香りの画像を表示`);
-    const cats=[...new Set(c.apps.map(a=>a.drink))],cross=cats.length>=2;
-    const idx=state.drink==='cross'?'X':officialNo(c);
-    const front=card.querySelector('.front');
-    const back=card.querySelector('.back-face');
-    if(!front||!back) return;
+  function transformCard(card) {
+    if (card.dataset.nameFirstReady === '1') return;
+    const compound = byId[card.dataset.id];
+    if (!compound) return;
+    const front = card.querySelector('.front');
+    const back = card.querySelector('.back-face');
+    if (!front || !back) return;
 
-    front.innerHTML=`
-      <span class="card-index">${idx} / NAME</span>
-      ${cross?`<span class="cross-badge">×${cats.length} DRINKS</span>`:''}
-      <div class="name-front">
-        <h3>${esc(c.ja)}</h3>
-        <div class="name-front-en">${esc(c.en)}</div>
-      </div>
-      <div class="name-front-foot"><span>${esc(c.family)}</span><span class="tap-cue"><span class="desktop-only">HOVER</span><span class="mobile-only">TAP</span> ↗</span></div>`;
+    card.dataset.nameFirstReady = '1';
+    card.setAttribute('aria-label', `${compound.ja}。操作すると香り、構造式、酒をまたぐ情報を表示`);
+    card.setAttribute('aria-expanded', 'false');
 
-    const assets=AROMA_BY_COMPOUND[c.id]||[];
-    back.innerHTML=`
-      <div class="reveal-head"><span>${idx} / AROMA + STRUCTURE</span>${cross?`<span>×${cats.length} DRINKS</span>`:''}</div>
+    const drinks = [...new Set(compound.apps.map(item => item.drink))];
+    const cross = drinks.length >= 2;
+    const index = state.drink === 'cross' ? 'X' : officialNo(compound);
+    const assets = AROMA_BY_COMPOUND[compound.id] || [];
+
+    front.innerHTML = `
+      <span class="card-index">${index} / NAME</span>
+      ${cross ? `<span class="cross-badge">×${drinks.length} DRINKS</span>` : ''}
+      <div class="name-front"><small>AROMA MOLECULE</small><h3>${esc(compound.ja)}</h3><div class="name-front-en">${esc(compound.en)}</div></div>
+      <div class="name-front-foot"><span>${esc(compound.family)}</span><span class="tap-cue"><span class="desktop-only">HOVER</span><span class="mobile-only">TAP</span> ↗</span></div>`;
+
+    back.innerHTML = `
+      <div class="reveal-head"><span>${index} / REVEAL</span><span>AROMA → MOLECULE → DRINKS</span></div>
       <div class="reveal-body">
-        <div class="aroma-reveal">
-          <div class="aroma-reveal-images">${assets.slice(0,2).map(s=>aromaImage(s,c.aroma)).join('')}</div>
-          <div class="aroma-reveal-copy"><strong>${esc(c.aroma)}</strong><small>AROMA VISUAL</small></div>
-        </div>
-        <div class="chem-reveal">
-          <div class="hotfix-structure"><img loading="lazy" decoding="async" alt="${esc(c.ja)}の構造式" src="${structureUrl(c)}"><span class="hotfix-structure-fallback">2D STRUCTURE<br>NOT LOADED</span></div>
-          <div class="chem-caption"><strong>${esc(c.ja)}</strong><span>${esc(c.en)}</span><em>${esc(c.family)}</em></div>
-        </div>
-      </div>
-      <div class="reveal-actions">${drinkRail(c)}<button class="related" data-family="${esc(c.family)}">SIMILAR SHAPES / ${esc(c.family)} ↗</button></div>`;
-    bindNewControls(card,c);
+        <section class="reveal-stage aroma-stage"><div class="stage-label">01 / AROMA</div><div class="aroma-stage-images">${assets.slice(0,2).map(slug => aromaImage(slug, compound.aroma)).join('')}</div><div class="aroma-stage-copy"><strong>${esc(compound.aroma)}</strong></div></section>
+        <section class="reveal-stage molecule-stage"><div class="stage-label">02 / MOLECULE</div><div class="structure-wrap final-structure"><img loading="lazy" decoding="async" alt="${esc(compound.ja)}の構造式" src="${structureUrl(compound)}"><span class="structure-fallback">2D STRUCTURE<br>NOT LOADED</span></div><div class="molecule-copy"><strong>${esc(compound.ja)}</strong><span>${esc(compound.en)}</span><em>${esc(compound.family)}</em>${compound.note ? `<small>${esc(compound.note)}</small>` : ''}</div></section>
+        <section class="reveal-stage drinks-stage"><div class="stage-label">03 / ACROSS DRINKS</div>${drinkRail(compound)}<button class="related" data-family="${esc(compound.family)}">SIMILAR SHAPES / ${esc(compound.family)} ↗</button></section>
+      </div>`;
+
+    bindNewControls(card, compound);
   }
 
-  let queued=false;
-  function transformAll(){
-    queued=false;
+  let queued = false;
+  function transformAll() {
+    queued = false;
     document.querySelectorAll('#cards .card').forEach(transformCard);
   }
-  function queueTransform(){if(queued)return;queued=true;requestAnimationFrame(transformAll)}
-
-  function buildVisualIndex(){
-    if(document.getElementById('aromaVisualIndex')) return;
-    const progress=document.querySelector('.progress-panel');
-    if(!progress) return;
-    const section=document.createElement('details');
-    section.id='aromaVisualIndex';
-    section.className='visual-index';
-    section.innerHTML=`<summary><span><b>AROMA VISUAL INDEX</b><small>完成版 60種類</small></span><i>OPEN / 60 ↗</i></summary><div class="visual-index-grid">${VISUAL_INDEX.map(([slug,ja],i)=>`<figure><span>${String(i+1).padStart(2,'0')}</span>${aromaImage(slug,ja)}<figcaption>${esc(ja)}</figcaption></figure>`).join('')}</div>`;
-    progress.parentNode.insertBefore(section,progress);
-    section.querySelectorAll('.final-aroma-img').forEach(img=>img.onerror=()=>{if(img.dataset.master)img.src=img.dataset.master});
+  function queueTransform() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(transformAll);
   }
 
-  const cards=document.getElementById('cards');
-  if(cards){
-    new MutationObserver(queueTransform).observe(cards,{childList:true,subtree:false});
+  function buildVisualIndex() {
+    if (document.getElementById('aromaVisualIndex')) return;
+    const progress = document.querySelector('.progress-panel');
+    if (!progress) return;
+    const section = document.createElement('details');
+    section.id = 'aromaVisualIndex';
+    section.className = 'visual-index';
+    section.innerHTML = '<summary><span><b>AROMA VISUAL INDEX</b><small>完成版 60種類</small></span><i>OPEN / 60 ↗</i></summary>';
+    section.addEventListener('toggle', () => {
+      if (!section.open || section.dataset.ready === '1') return;
+      section.dataset.ready = '1';
+      const grid = document.createElement('div');
+      grid.className = 'visual-index-grid';
+      grid.innerHTML = VISUAL_INDEX.map(([slug, label], index) => `<figure><span>${String(index + 1).padStart(2,'0')}</span>${aromaImage(slug, label)}<figcaption>${esc(label)}</figcaption></figure>`).join('');
+      section.appendChild(grid);
+    });
+    progress.parentNode.insertBefore(section, progress);
+  }
+
+  const cards = document.getElementById('cards');
+  if (cards) {
+    new MutationObserver(queueTransform).observe(cards, {childList:true, subtree:false});
     transformAll();
   }
   buildVisualIndex();
