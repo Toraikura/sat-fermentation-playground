@@ -260,7 +260,8 @@ async function testIPhone() {
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'iPhone second tap should close 4VG');
   assert.equal(await card.evaluate(el => el.classList.contains('hover-revealed')), false, 'touch mode must not leave a hover-revealed state');
 
-  await page.screenshot({ path: 'qa-artifacts/aroma-lab-iphone.png', fullPage: true });
+  await card.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'qa-artifacts/aroma-lab-iphone.png' });
   finishDiagnostics();
   await browser.close();
   console.log('PASS iPhone WebKit: one-column layout, lazy-loaded structure reveal, and 4VG tap reset');
