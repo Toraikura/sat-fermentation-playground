@@ -54,6 +54,30 @@ async function visibleIds(page) {
   return page.locator('#cards .card').evaluateAll(cards => cards.map(card => card.dataset.id));
 }
 
+async function waitForCardStructureDecoded(page, id, label) {
+  await page.waitForFunction(compoundId => {
+    const image = document.querySelector(`#compound-${compoundId} .final-structure img`);
+    return Boolean(image && image.complete && image.naturalWidth > 0 && image.naturalHeight > 0);
+  }, id, { timeout: 5000 });
+
+  const failures = await page.locator(`#compound-${id}`).evaluate(card => {
+    const image = card.querySelector('.final-structure img');
+    const fallback = card.querySelector('.structure-fallback');
+    const style = image ? getComputedStyle(image) : null;
+    const issues = [];
+    if (!image) issues.push('missing final structure img');
+    else {
+      if (!image.complete || image.naturalWidth === 0) issues.push('structure image not decoded');
+      if (style.transform !== 'none') issues.push(`unexpected transform ${style.transform}`);
+      if (style.objectPosition !== '50% 50%') issues.push(`unexpected object-position ${style.objectPosition}`);
+    }
+    if (fallback && getComputedStyle(fallback).display !== 'none') issues.push('fallback visible');
+    return issues;
+  });
+
+  assert.deepEqual(failures, [], `${label} ${id}: ${failures.join(' | ')}`);
+}
+
 async function assertVisibleStructures(page, label) {
   const failures = await page.locator('#cards .card').evaluateAll(cards => cards.flatMap(card => {
     const image = card.querySelector('.final-structure img');
@@ -72,7 +96,7 @@ async function assertVisibleStructures(page, label) {
   assert.deepEqual(failures, [], `${label}: ${failures.join(' | ')}`);
 }
 
-async function assertAllStructureAssets(page) {
+async function assertAllStructureAssets(page, label) {
   const result = await page.evaluate(async ids => {
     const loadSvg = id => new Promise(resolve => {
       const image = new Image();
@@ -127,9 +151,9 @@ async function assertAllStructureAssets(page) {
     return { decodedFailures, centerFailures, maxDx, maxDy };
   }, STRUCTURE_IDS);
 
-  assert.deepEqual(result.decodedFailures, [], `SVG decode failures: ${JSON.stringify(result.decodedFailures)}`);
-  assert.deepEqual(result.centerFailures, [], `SVG center failures: ${result.centerFailures.join(' | ')}`);
-  console.log(`PASS structure assets: ${STRUCTURE_IDS.length}/51 decoded; max browser bbox delta x=${result.maxDx.toFixed(2)} y=${result.maxDy.toFixed(2)}`);
+  assert.deepEqual(result.decodedFailures, [], `${label} SVG decode failures: ${JSON.stringify(result.decodedFailures)}`);
+  assert.deepEqual(result.centerFailures, [], `${label} SVG center failures: ${result.centerFailures.join(' | ')}`);
+  console.log(`PASS ${label}: ${STRUCTURE_IDS.length}/51 decoded; max browser bbox delta x=${result.maxDx.toFixed(2)} y=${result.maxDy.toFixed(2)}`);
 }
 
 async function testDesktop() {
@@ -140,7 +164,7 @@ async function testDesktop() {
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await waitForCards(page, EXPECTED_COUNTS.sake);
   await assertVisibleStructures(page, 'desktop sake');
-  await assertAllStructureAssets(page);
+  await assertAllStructureAssets(page, 'Chromium structure assets');
 
   const allIds = new Set(await visibleIds(page));
 
@@ -208,7 +232,8 @@ async function testIPhone() {
 
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await waitForCards(page, EXPECTED_COUNTS.sake);
-  await assertVisibleStructures(page, 'iPhone sake');
+  await assertAllStructureAssets(page, 'iPhone WebKit structure assets');
+  await waitForCardStructureDecoded(page, 'ethyl-acetate', 'iPhone initial viewport');
 
   const cards = page.locator('#cards .card');
   const firstBox = await cards.nth(0).boundingBox();
@@ -223,6 +248,7 @@ async function testIPhone() {
     const card = document.querySelector('#compound-4vg');
     return card?.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'true';
   });
+  await waitForCardStructureDecoded(page, '4vg', 'iPhone revealed card');
   assert.equal(await card.getAttribute('aria-expanded'), 'true', 'iPhone first tap should reveal 4VG');
 
   await card.tap();
@@ -237,7 +263,7 @@ async function testIPhone() {
   await page.screenshot({ path: 'qa-artifacts/aroma-lab-iphone.png', fullPage: true });
   finishDiagnostics();
   await browser.close();
-  console.log('PASS iPhone WebKit: one-column layout, structure loads, and 4VG tap reset');
+  console.log('PASS iPhone WebKit: one-column layout, lazy-loaded structure reveal, and 4VG tap reset');
 }
 
 await testDesktop();
