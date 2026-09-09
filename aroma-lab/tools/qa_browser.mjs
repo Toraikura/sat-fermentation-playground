@@ -251,6 +251,20 @@ async function testIPhone() {
   await waitForCardStructureDecoded(page, '4vg', 'iPhone revealed card');
   assert.equal(await card.getAttribute('aria-expanded'), 'true', 'iPhone first tap should reveal 4VG');
 
+  const revealedFaces = await card.evaluate(element => {
+    const front = element.querySelector('.front');
+    const back = element.querySelector('.back-face');
+    return {
+      frontDisplay: getComputedStyle(front).display,
+      backDisplay: getComputedStyle(back).display,
+      backTransform: getComputedStyle(back).transform
+    };
+  });
+  assert.equal(revealedFaces.frontDisplay, 'none', 'iPhone revealed state must explicitly hide the front face');
+  assert.notEqual(revealedFaces.backDisplay, 'none', 'iPhone revealed state must explicitly show the back face');
+  assert.equal(revealedFaces.backTransform, 'none', 'iPhone revealed back face must not be mirrored by a 3D transform');
+  await card.screenshot({ path: 'qa-artifacts/aroma-lab-iphone-4vg-revealed.png' });
+
   await card.tap();
   await page.waitForFunction(() => {
     const card = document.querySelector('#compound-4vg');
@@ -260,11 +274,23 @@ async function testIPhone() {
   assert.equal(await card.getAttribute('aria-expanded'), 'false', 'iPhone second tap should close 4VG');
   assert.equal(await card.evaluate(el => el.classList.contains('hover-revealed')), false, 'touch mode must not leave a hover-revealed state');
 
-  await card.scrollIntoViewIfNeeded();
-  await page.screenshot({ path: 'qa-artifacts/aroma-lab-iphone.png' });
+  const closedFaces = await card.evaluate(element => {
+    const front = element.querySelector('.front');
+    const back = element.querySelector('.back-face');
+    return {
+      frontDisplay: getComputedStyle(front).display,
+      frontTransform: getComputedStyle(front).transform,
+      backDisplay: getComputedStyle(back).display
+    };
+  });
+  assert.notEqual(closedFaces.frontDisplay, 'none', 'iPhone closed state must explicitly show the front face');
+  assert.equal(closedFaces.frontTransform, 'none', 'iPhone closed front face must not be mirrored by a 3D transform');
+  assert.equal(closedFaces.backDisplay, 'none', 'iPhone closed state must explicitly hide the back face');
+  await card.screenshot({ path: 'qa-artifacts/aroma-lab-iphone-4vg-front.png' });
+
   finishDiagnostics();
   await browser.close();
-  console.log('PASS iPhone WebKit: one-column layout, lazy-loaded structure reveal, and 4VG tap reset');
+  console.log('PASS iPhone WebKit: one-column layout, lazy-loaded structure reveal, explicit face switching, and 4VG tap reset');
 }
 
 await testDesktop();
