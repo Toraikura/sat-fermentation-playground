@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - aroma-lab-structure-audit
+      - aroma-lab-aroma-match
     paths:
       - 'aroma-lab/**'
       - '.github/workflows/aroma-lab-qa.yml'
@@ -12,7 +13,7 @@ on:
 jobs:
   browser-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +37,9 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           sleep 2
           node aroma-lab/tools/qa_browser.mjs
+          if [ -f aroma-lab/tools/qa_aroma_match.mjs ]; then
+            node aroma-lab/tools/qa_aroma_match.mjs
+          fi
 
       - name: Upload screenshots
         if: always()
