@@ -7,7 +7,7 @@ Updated: 2026-09-09
 
 ## Final implementation status
 
-The chemistry audit, RDKit asset generation, AROMA LAB integration, centering correction, card flip-state fix, and production branch update are complete.
+The chemistry audit, readability-tuned RDKit asset generation, AROMA LAB integration, centering correction, card flip-state fix, browser QA, and production deployment are complete.
 
 - Source ledger: **51/51 complete**.
 - PubChem CID / CAS / SMILES / InChIKey: **51/51 locked**.
@@ -15,16 +15,26 @@ The chemistry audit, RDKit asset generation, AROMA LAB integration, centering co
 - Hayashi sensory-standard mapping: **51/51 represented in the AROMA LAB definition**; `h2s` is intentionally recorded as the WINE-P-07 missing/no-SDS reference rather than inventing an SDS mapping.
 - Special seven: **7/7 resolved** after SDS/official identity checks.
 - RDKit local SVG generation: **51/51 generated**.
-- Generated SVG geometry center QA: **51/51 pass in the generator workflow**.
 - Existing hand-drawn 44 SVG approach: **rejected; 0 files used as structure authority**.
 - Runtime structure source: **local `assets/structures/<id>.svg`**.
-- 51-SVG review page: **`aroma-lab/structure-preview.html` added**.
 - Integration centering: **fixed globally**; audited SVGs retain their viewport center and card hover no longer scales structure images.
 - Clove / 4VG flip-back bug: **fixed** by separating transient desktop hover state from pinned/click state.
-- Responsive implementation rules: **desktop / tablet / iPhone portrait breakpoints present and source-level checked**.
-- Production source: **`gh-pages` fast-forwarded to commit `bfecf1ccfa0a0755a268e1f940d6eb7c43adb76d`** before this audit-document update.
+- Browser QA: **Chromium desktop + iPhone WebKit pass**.
+- Production deployment: **`gh-pages` synchronized to the audited structure branch**.
 
-A physical iPhone/desktop click-through cannot be independently observed from the current GitHub-only execution environment. No claim of a physical-device visual pass is made here; the deployed source and responsive/interaction implementation have been checked directly.
+## Final readability rendering specification
+
+The final SVG set uses one deliberately high-legibility depiction system across all 51 compounds:
+
+- Canvas: **480 × 280 SVG viewport**.
+- Atom-label font size: **38**.
+- Bond line width: **2.6**.
+- Drawing padding: **0.12**.
+- Additional atom-label padding: **0.18**.
+- Atom labels and all bonds: **black**; no heteroatom color coding.
+- Carbonyl `C=O` depiction only: oxygen is displaced outward by **1.18×** in the 2D depiction so the two carbonyl strokes read more clearly.
+- Connectivity, bond order, E/Z, and tetrahedral stereochemistry are unchanged by that depiction adjustment.
+- `generate_structure_svgs.py` is locked to these settings so future regeneration does not revert to the earlier small/color-coded style.
 
 ## Mandatory drawing rules
 
@@ -65,24 +75,32 @@ See `STRUCTURE_SOURCE_LEDGER.csv` and `STRUCTURE_SOURCE_LEDGER.md` for the full 
 | `furaneol` | Hayashi names 4-hydroxy-2,5-dimethyl-3(2H)-furanone -> lock that graph. |
 | `athp` | Hayashi exact name plus J-GLOBAL/PubChem SMILES `CC(=O)C1=NCCCC1` -> lock free-base imine ring form; do not substitute hydrochloride CAS 27300-28-3. |
 
-## Geometry and notation QA
+## Final chemistry corrections before production
 
-RDKit draws each molecular graph into a 480 x 280 viewport with fixed padding/font/bond settings. The generation script checks path geometry against the viewport center. Runtime CSS now preserves that geometry instead of applying an additional hover scale.
+The initial readability-preview package contained two hand-entered SMILES that did not match the locked ledger. They were caught before production and replaced from the audited ledger:
+
+- `tca246` -> locked to ledger 2,4,6-trichloroanisole graph.
+- `tdn` -> locked to PubChem CID 121677 / ledger graph with the required dihydronaphthalene unsaturation.
+
+Other textual SMILES differences in the preview package were canonical-equivalent and did not change molecular identity.
+
+## Geometry and notation QA
 
 Confirmed outcomes:
 
-- `4vg`: generated local SVG retained; prior lower-edge clipping is not reintroduced by card CSS. The phenolic substituent is depicted with attached `HO` labeling.
-- `tca246`: generated local SVG retained; prior left shift is not reintroduced by card CSS.
-- `ethyl-laurate`: long chain is a true RDKit skeletal structure; no hand-drawn string/line shortcut.
-- `h2s`: explicit H-S-H bonds are retained.
-- `3mh`: terminal OH and thiol are structural atom labels; C3 stereochemistry remains unspecified as required.
-- `geosmin`: specified stereochemistry is preserved.
-- `beta-damascenone`, `beta-ionone`, `hexadienol`, `cis3hexenol`, `geraniol`, `trans2nonenal`: required E/Z geometry is preserved.
-- OH/HO and SH/HS labels come from the molecular graph depiction rather than manually placed text plus lines.
+- `4vg`: large black `HO` / ether O labels; no lower-edge clipping from card CSS.
+- `3mh`: large black `SH` / `OH`; C3 stereochemistry remains unspecified as required.
+- `ethyl-laurate`: true long-chain skeletal structure; ester oxygens remain readable.
+- `sotolon`: large black `HO` / ring O / carbonyl O labels.
+- `h2s`: explicit H-S-H bonds retained with black S and bonds.
+- `geosmin`: specified stereochemistry preserved.
+- `tca246` and `tdn`: corrected against the locked ledger before deployment.
+- `beta-damascenone`, `beta-ionone`, `hexadienol`, `cis3hexenol`, `geraniol`, `trans2nonenal`: required E/Z geometry preserved.
+- OH/HO and SH/HS labels come from molecular-graph depiction rather than manually placed text plus lines.
 
-## Interaction fix
+## Interaction and browser QA
 
-Desktop hover and click pinning now use separate state:
+Desktop hover and click pinning use separate state:
 
 - pointer enter on a fine-pointer device -> temporary `hover-revealed`
 - click -> persistent `revealed` + `pinned`
@@ -90,11 +108,11 @@ Desktop hover and click pinning now use separate state:
 - pointer leave -> clears transient hover suppression
 - touch devices do not use the desktop hover path
 
-This removes the 4VG/clove card case where CSS `:hover` could immediately re-flip the card after unpinning.
+Automated browser QA covers Chromium desktop and iPhone WebKit, including 51 SVG decode, SVG centering, card counts, 4VG flip reset, touch reveal/reset, and mobile one-column behavior.
 
 ## Deployment
 
-`gh-pages` was fast-forwarded from the previous production commit to the audited structure branch without force-push or conflict. Production `app.js` now resolves every structure through:
+Production `app.js` resolves every structure through:
 
 ```js
 './assets/structures/' + encodeURIComponent(c.id) + '.svg'
