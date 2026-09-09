@@ -1,0 +1,34 @@
+name: Cleanup AROMA LAB QA workflow
+
+on:
+  push:
+    branches:
+      - aroma-lab-60-icons
+    paths:
+      - aroma-lab/.cleanup-aroma-qa
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-60-icons
+          fetch-depth: 0
+      - name: Keep QA evidence, remove temporary workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f aroma-lab/QA_STATUS.md
+          grep -q "WebP delivery assets: 60" aroma-lab/QA_STATUS.md
+          grep -q "390x844" aroma-lab/QA_STATUS.md
+          rm -f aroma-lab/.cleanup-aroma-qa
+          rm -f .github/workflows/verify-aroma-lab.yml .github/workflows/cleanup-aroma-qa.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: remove temporary AROMA LAB QA workflows" || true
+          git push origin HEAD:aroma-lab-60-icons
