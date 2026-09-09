@@ -1,0 +1,40 @@
+name: Unpack AROMA LAB hotfix assets
+
+on:
+  push:
+    branches:
+      - aroma-lab-name-first-hotfix
+    paths:
+      - aroma-lab/assets/aroma-lab/aroma-web-256.tar.gz
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: aroma-lab-name-first-hotfix
+          fetch-depth: 0
+      - name: Unpack assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="aroma-lab/assets/aroma-lab/aroma-web-256.tar.gz"
+          target="aroma-lab/assets/aroma-lab"
+          mkdir -p "$target"
+          tar -xzf "$archive" -C "$target"
+          test "$(find "$target/web" -maxdepth 1 -type f -name 'aroma-*.webp' | wc -l | tr -d ' ')" = "60"
+          rm "$archive"
+      - name: Commit extracted assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add aroma-lab/assets/aroma-lab
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add 60 AROMA LAB web icons [skip ci]"
+          git push origin HEAD:aroma-lab-name-first-hotfix
