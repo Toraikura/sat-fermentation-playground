@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import csv
-import json
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -9,23 +8,18 @@ from pathlib import Path
 from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Geometry import Point3D
 
 WIDTH = 480
 HEIGHT = 280
 CENTER_X = WIDTH / 2
 CENTER_Y = HEIGHT / 2
-CENTER_TOLERANCE = 0.25
-
-COLOR_SHORTCUTS = {
-    "#000000": "#000",
-    "#FF0000": "#f00",
-    "#0000FF": "#00f",
-    "#FFFF00": "#ff0",
-    "#00CC00": "#0c0",
-    "#7F7F7F": "#7f7f7f",
-    "#00CCCC": "#0cc",
-    "#FF7F00": "#f70",
-}
+CENTER_TOLERANCE = 1.0
+FONT_SIZE = 38
+BOND_LINE_WIDTH = 2.6
+PADDING = 0.12
+ATOM_LABEL_PADDING = 0.18
+CARBONYL_SCALE = 1.18
 
 
 def molecule_from_smiles(smiles: str, compound_id: str):
@@ -44,82 +38,66 @@ def molecule_from_smiles(smiles: str, compound_id: str):
     return mol
 
 
-def short_color(value):
-    if value is None:
-        return None
-    value = value.strip()
-    return COLOR_SHORTCUTS.get(value, value)
+def elongate_carbonyls(mol):
+    """Lengthen only C=O bonds by moving the O atom away from carbon.
 
-
-def compact_svg(svg: str) -> str:
-    root = ET.fromstring(svg)
-    paths = []
-
-    for element in root.iter():
-        if element.tag.split("}")[-1] != "path":
+    This is a readability adjustment to the 2D depiction only. Connectivity,
+    bond order, stereochemistry, and the accepted structure identity are unchanged.
+    """
+    conf = mol.GetConformer()
+    for bond in mol.GetBonds():
+        if bond.GetBondType() != Chem.BondType.DOUBLE:
             continue
 
-        path_data = element.attrib.get("d")
-        if not path_data:
+        begin = bond.GetBeginAtom()
+        end = bond.GetEndAtom()
+        if begin.GetAtomicNum() == 6 and end.GetAtomicNum() == 8:
+            carbon_idx, oxygen_idx = begin.GetIdx(), end.GetIdx()
+        elif end.GetAtomicNum() == 6 and begin.GetAtomicNum() == 8:
+            carbon_idx, oxygen_idx = end.GetIdx(), begin.GetIdx()
+        else:
             continue
 
-        attrs = [f"d={json.dumps(path_data)}"]
-        style = element.attrib.get("style", "")
-        fill = element.attrib.get("fill")
-        stroke = None
-        stroke_width = None
+        carbon = conf.GetAtomPosition(carbon_idx)
+        oxygen = conf.GetAtomPosition(oxygen_idx)
+        dx = oxygen.x - carbon.x
+        dy = oxygen.y - carbon.y
+        conf.SetAtomPosition(
+            oxygen_idx,
+            Point3D(
+                carbon.x + dx * CARBONYL_SCALE,
+                carbon.y + dy * CARBONYL_SCALE,
+                0.0,
+            ),
+        )
 
-        if style:
-            match = re.search(r"stroke:([^;]+)", style)
-            if match:
-                stroke = match.group(1)
 
-            match = re.search(r"stroke-width:([^;]+)", style)
-            if match:
-                stroke_width = match.group(1)
-
-            match = re.search(r"fill:([^;]+)", style)
-            if match and not fill:
-                fill = match.group(1)
-
-        fill = short_color(fill)
-        stroke = short_color(stroke)
-
-        if fill:
-            attrs.append(f"fill='{fill}'")
-        elif stroke:
-            attrs.append("fill='none'")
-
-        if stroke:
-            attrs.append(f"stroke='{stroke}'")
-
-        if stroke_width:
-            attrs.append(f"stroke-width='{stroke_width.replace('px', '')}'")
-
-        paths.append("<path " + " ".join(attrs) + "/>")
-
-    return (
-        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 280'>"
-        + "".join(paths)
-        + "</svg>"
-    )
+def strip_xml_preamble(svg: str) -> str:
+    svg = svg.strip()
+    if svg.startswith("<?xml"):
+        svg = svg.split("?>", 1)[1].strip()
+    return svg
 
 
 def draw_svg(smiles: str, compound_id: str) -> str:
     mol = molecule_from_smiles(smiles, compound_id)
     rdDepictor.Compute2DCoords(mol, canonOrient=True)
+    elongate_carbonyls(mol)
 
     drawer = rdMolDraw2D.MolDraw2DSVG(WIDTH, HEIGHT)
     options = drawer.drawOptions()
-    options.padding = 0.10
-    options.fixedFontSize = 20
-    options.bondLineWidth = 2.0
+    options.padding = PADDING
+    options.fixedFontSize = FONT_SIZE
+    options.additionalAtomLabelPadding = ATOM_LABEL_PADDING
+    options.bondLineWidth = BOND_LINE_WIDTH
     options.explicitMethyl = False
     options.clearBackground = False
+    options.useBWAtomPalette()
 
+    drawer.SetFontSize(FONT_SIZE)
     drawer.DrawMolecule(mol)
     drawer.FinishDrawing()
-    return compact_svg(drawer.GetDrawingText())
+    return strip_xml_preamble(drawer.GetDrawingText())
 
 
 def drawing_bbox(svg: str):
@@ -129,38 +107,19 @@ def drawing_bbox(svg: str):
 
     for element in root.iter():
         tag = element.tag.split("}")[-1]
+        if tag != "path" or "d" not in element.attrib:
+            continue
 
-        if tag == "path" and "d" in element.attrib:
-            values = [
-                float(value)
-                for value in re.findall(
-                    r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?",
-                    element.attrib["d"],
-                )
-            ]
-            for index in range(0, len(values) - 1, 2):
-                xs.append(values[index])
-                ys.append(values[index + 1])
-
-        elif tag in {"circle", "ellipse"}:
-            cx = float(element.attrib.get("cx", 0))
-            cy = float(element.attrib.get("cy", 0))
-            rx = float(element.attrib.get("r", element.attrib.get("rx", 0)))
-            ry = float(element.attrib.get("r", element.attrib.get("ry", 0)))
-            xs.extend([cx - rx, cx + rx])
-            ys.extend([cy - ry, cy + ry])
-
-        elif tag in {"polygon", "polyline"}:
-            values = [
-                float(value)
-                for value in re.findall(
-                    r"[-+]?\d*\.?\d+",
-                    element.attrib.get("points", ""),
-                )
-            ]
-            for index in range(0, len(values) - 1, 2):
-                xs.append(values[index])
-                ys.append(values[index + 1])
+        values = [
+            float(value)
+            for value in re.findall(
+                r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?",
+                element.attrib["d"],
+            )
+        ]
+        for index in range(0, len(values) - 1, 2):
+            xs.append(values[index])
+            ys.append(values[index + 1])
 
     if not xs or not ys:
         raise ValueError("SVG contains no drawable molecular geometry")
@@ -208,12 +167,14 @@ def main():
 
     for row in rows:
         compound_id = row["id"]
-        smiles = row["smiles"]
-        svg = draw_svg(smiles, compound_id)
+        svg = draw_svg(row["smiles"], compound_id)
         assert_centered(svg, compound_id)
         (args.output / f"{compound_id}.svg").write_text(svg, encoding="utf-8")
 
-    print(f"Generated and centered {len(rows)} SVGs in {args.output}")
+    print(
+        f"Generated {len(rows)} all-black SVGs: font={FONT_SIZE}, "
+        f"bond={BOND_LINE_WIDTH}, carbonyl-scale={CARBONYL_SCALE}"
+    )
 
 
 if __name__ == "__main__":
