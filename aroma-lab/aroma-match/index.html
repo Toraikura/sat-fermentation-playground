@@ -6,26 +6,31 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="theme-color" content="#f3efe3">
+  <meta name="theme-color" content="#252032">
   <meta name="description" content="AROMA LABの51化合物から、香り成分名と香りを結びつけるマッチングゲーム。ALL・日本酒・焼酎／泡盛・ワイン・ビール・酒をまたぐ成分から選び、EASYとHARDで遊べます。">
   <title>AROMA MATCH — AROMA LAB</title>
   <link rel="stylesheet" href="./styles.css?v=20260910d">
   <link rel="stylesheet" href="./modes.css?v=20260910d">
+  <link rel="stylesheet" href="./visual-direction.css?v=20260910-amvd1">
 </head>
-<body>
+<body data-design="aroma-match-final">
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="../" aria-label="AROMA LABOへ戻る"><span class="sat-mark">SAT</span><span>AROMA LABO</span></a>
+      <a class="brand" href="../" aria-label="AROMA LABOへ戻る">
+        <span class="sat-mark">SAT</span>
+        <span class="brand-context"><strong>FERMENTATION PLAYGROUND</strong><small>AROMA LABO / GAME MODE</small></span>
+      </a>
       <a class="back" href="../">← AROMA LABO</a>
     </div>
   </header>
 
   <main class="wrap match-shell">
     <section class="match-hero" aria-labelledby="gameTitle">
-      <div>
-        <div class="eyebrow">INTERACTIVE STUDY / 02</div>
+      <div class="match-hero-copy">
+        <div class="match-meta"><div class="eyebrow">AROMA LABO / GAME MODE / 02</div><div class="match-room">AFTER HOURS PLAY MODE</div></div>
         <h1 id="gameTitle">AROMA <span>MATCH</span></h1>
         <p>香り成分と、その香りを結べ。</p>
+        <div class="match-route">NAME → AROMA → MATCH</div>
       </div>
       <div class="mode-card" aria-label="ゲーム難易度">
         <div class="mode-card-head"><small>SELECT LEVEL</small><span>TAP TO CHANGE</span></div>
@@ -39,7 +44,7 @@
 
     <section class="match-taxonomy" aria-label="出題する酒類を選ぶ">
       <div class="taxonomy-head">
-        <small>CHOOSE A DRINK</small>
+        <small>AROMA LABO / CHOOSE A DRINK</small>
         <span id="filterStatus">ALL · 51</span>
       </div>
       <div class="taxonomy-scroll" role="group" aria-label="酒類カテゴリ">
