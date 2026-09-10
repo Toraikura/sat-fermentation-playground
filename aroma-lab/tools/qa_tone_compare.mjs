@@ -34,6 +34,18 @@ async function assertNoHorizontalOverflow(page, label) {
   assert(geometry.bodyScrollWidth <= geometry.clientWidth + 1, `${label}: body overflow ${JSON.stringify(geometry)}`);
 }
 
+async function scrollWorkspaceToSameFrame(page) {
+  await page.evaluate(() => {
+    const target = document.querySelector('.control-row');
+    if (!target) return;
+    const topbar = document.querySelector('.topbar')?.getBoundingClientRect().height || 0;
+    const nav = document.querySelector('.lab-nav')?.getBoundingClientRect().height || 0;
+    const absoluteTop = target.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top:Math.max(0, absoluteTop - topbar - nav - 10), behavior:'instant' });
+  });
+  await page.waitForTimeout(160);
+}
+
 async function assertCoreContent(page, key, label) {
   await page.waitForSelector('#cards .card');
   assert.equal(await page.locator('#cards .card').count(), 19, `${label}: initial SAKE count changed`);
@@ -131,8 +143,8 @@ async function testDesktop(key) {
   await page.screenshot({ path:`qa-artifacts/tone-${key}-desktop-hero-match.png`, fullPage:false });
 
   await testTabs(page, label);
-  const firstCard = page.locator('#cards .card').first();
-  await firstCard.scrollIntoViewIfNeeded();
+  await scrollWorkspaceToSameFrame(page);
+  await page.mouse.move(2,2);
   await page.waitForTimeout(120);
   await page.screenshot({ path:`qa-artifacts/tone-${key}-desktop-cards.png`, fullPage:false });
 
@@ -173,9 +185,7 @@ async function testIPhone(key) {
   await page.locator('.lab-mode-entry').screenshot({ path:`qa-artifacts/tone-${key}-iphone-aroma-match.png` });
 
   await testTabs(page, label);
-  const firstCard = page.locator('#cards .card').first();
-  await firstCard.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(100);
+  await scrollWorkspaceToSameFrame(page);
   await assertNoHorizontalOverflow(page, `${label}-cards`);
   await page.screenshot({ path:`qa-artifacts/tone-${key}-iphone-cards.png`, fullPage:false });
 
