@@ -263,9 +263,9 @@ body{
 }
 
 /*
-  WebKit can render the rounded, shadowed 3D clone from its reverse side in this C palette,
-  mirroring both text and molecular graphics. The tap/open interaction is unchanged; only C's
-  mobile reveal presentation uses a 2D face switch so the specimen sheet stays readable.
+  WebKit can mirror the rounded/shadowed 3D clone in this C palette. The source card, tap handler,
+  data and modal lifecycle stay untouched; only the visible face inside an open C modal is forced
+  to the already-generated reveal face so the comparison remains readable and deterministic.
 */
 @media(max-width:600px){
   body[data-tone="c"] .mobile-expanded-card .card-inner{
@@ -282,39 +282,25 @@ body{
     transform-style:flat!important;
     -webkit-transform-style:flat!important;
   }
-  body[data-tone="c"] .mobile-expanded-card .front{
-    display:flex!important;
-    visibility:visible!important;
-    opacity:1!important;
-    z-index:2!important;
-    transform:none!important;
-    -webkit-transform:none!important;
-    transition:opacity .18s ease!important;
-    pointer-events:none!important;
-  }
-  body[data-tone="c"] .mobile-expanded-card .back-face{
-    display:flex!important;
-    visibility:hidden!important;
-    opacity:0!important;
-    z-index:1!important;
-    transform:none!important;
-    -webkit-transform:none!important;
-    transition:opacity .24s ease!important;
-    pointer-events:none!important;
-  }
-  body[data-tone="c"] .mobile-expanded-card.is-flipped .front{
+  body[data-tone="c"] .mobile-card-modal.open .mobile-expanded-card .front{
     display:none!important;
     visibility:hidden!important;
     opacity:0!important;
     z-index:0!important;
-  }
-  body[data-tone="c"] .mobile-expanded-card.is-flipped .back-face{
-    display:flex!important;
-    visibility:visible!important;
-    opacity:1!important;
-    z-index:3!important;
     transform:none!important;
     -webkit-transform:none!important;
+    pointer-events:none!important;
+  }
+  body[data-tone="c"] .mobile-card-modal.open .mobile-expanded-card .back-face{
+    display:flex!important;
+    position:absolute!important;
+    inset:0!important;
+    visibility:visible!important;
+    opacity:1!important;
+    z-index:10!important;
+    transform:none!important;
+    -webkit-transform:none!important;
+    transition:none!important;
     pointer-events:auto!important;
   }
 }
