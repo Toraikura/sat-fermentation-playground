@@ -4,8 +4,34 @@
   const data = window.AROMA_MATCH_DATA;
   if (!data || !Array.isArray(data.compounds)) throw new Error('AROMA_MATCH_DATA is missing');
 
-  const ROUND_SIZE = 6;
-  const FIRST_ROUND_PRIORITY = ['ethyl-acetate','isoamyl-acetate','4vg','dms'];
+  const MODE_CONFIG = {
+    easy: {label:'EASY', level:'LEVEL 1', roundSize:6, meta:'6 PAIRS / UNIQUE ANSWERS'},
+    hard: {label:'HARD', level:'LEVEL 2', roundSize:8, meta:'8 PAIRS / UNIQUE ANSWERS'}
+  };
+
+  const ROUND_PRIORITY = {
+    easy: {
+      all: ['ethyl-acetate','isoamyl-acetate','4vg','dms'],
+      sake: ['isoamyl-acetate','ethyl-hexanoate','isovaleraldehyde','dms'],
+      shochu: ['isoamyl-acetate','linalool','sotolon','furfural'],
+      wine: ['3mh','tdn','ibmp','so2'],
+      beer: ['4vg','diacetyl','dms','3mbt'],
+      cross: ['isoamyl-acetate','4vg','dms','diacetyl']
+    },
+    hard: {
+      all: ['athp','tdn','dcp26','tca236','dmts','octenol','ibmp','2ap'],
+      sake: ['ethanethiol','dmts','tca246','hexanoic-acid','isovaleric-acid','isovaleraldehyde'],
+      shochu: ['edmp','furfural','octenol','ethyl-laurate','tca246','dmts'],
+      wine: ['athp','tdn','ibmp','so2','4ep','geosmin','h2s','furaneol'],
+      beer: ['trans2nonenal','3mbt','dcp26','ethanethiol','isoamyl-alcohol','linalool','diacetyl','4vg'],
+      cross: ['ethanethiol','dmts','tca246','isovaleric-acid','linalool','beta-damascenone','acetaldehyde','4vg']
+    }
+  };
+
+  const filters = Array.isArray(data.filters) && data.filters.length
+    ? data.filters
+    : [{id:'all',label:'ALL',ja:'全て',count:data.compounds.length}];
+  const filterById = new Map(filters.map(filter => [filter.id, filter]));
   const aromaById = new Map(data.aromas.map(aroma => [aroma.id, aroma]));
   const compoundById = new Map(data.compounds.map(compound => [compound.id, compound]));
 
@@ -15,6 +41,7 @@
     aromaColumn: document.getElementById('aromaColumn'),
     layer: document.getElementById('connectionLayer'),
     matchCount: document.getElementById('matchCount'),
+    matchTotal: document.getElementById('matchTotal'),
     time: document.getElementById('timeValue'),
     miss: document.getElementById('missValue'),
     live: document.getElementById('liveStatus'),
@@ -23,13 +50,23 @@
     structureImage: document.getElementById('structureImage'),
     structureName: document.getElementById('structureName'),
     result: document.getElementById('resultLayer'),
+    resultKicker: document.getElementById('resultKicker'),
+    resultTitle: document.getElementById('resultTitle'),
+    resultMode: document.getElementById('resultMode'),
     score: document.getElementById('scoreValue'),
     resultTime: document.getElementById('resultTime'),
     resultMiss: document.getElementById('resultMiss'),
-    replay: document.getElementById('replayButton')
+    replay: document.getElementById('replayButton'),
+    filterStatus: document.getElementById('filterStatus'),
+    gameNote: document.getElementById('gameNote'),
+    modeMeta: document.getElementById('modeMeta'),
+    filterButtons: Array.from(document.querySelectorAll('[data-drink-filter]')),
+    modeButtons: Array.from(document.querySelectorAll('[data-game-mode]'))
   };
 
   const state = {
+    filter: 'all',
+    mode: 'easy',
     roundIndex: 0,
     round: [],
     leftSelected: null,
@@ -52,19 +89,33 @@
     return array;
   }
 
+  function roundSize() {
+    return MODE_CONFIG[state.mode].roundSize;
+  }
+
+  function isInFilter(compound, filterId = state.filter) {
+    if (filterId === 'all') return true;
+    if (filterId === 'cross') return Boolean(compound.crossDrink);
+    return Array.isArray(compound.categories) && compound.categories.includes(filterId);
+  }
+
+  function candidatesForFilter(filterId = state.filter) {
+    return data.compounds.filter(compound => compound.aromaIds.length > 0 && isInFilter(compound, filterId));
+  }
+
   function canJoinRound(compound, usedAromas) {
     return compound.aromaIds.length > 0 && compound.aromaIds.every(aromaId => !usedAromas.has(aromaId));
   }
 
-  function findUniqueRound(candidates, seed = []) {
-    const selected = seed.slice();
-    const usedAromas = new Set(seed.flatMap(compound => compound.aromaIds));
-    const seedIds = new Set(seed.map(compound => compound.id));
+  function findUniqueRound(candidates, seed = [], targetSize = roundSize()) {
+    const selected = seed.slice(0, targetSize);
+    const usedAromas = new Set(selected.flatMap(compound => compound.aromaIds));
+    const seedIds = new Set(selected.map(compound => compound.id));
     const pool = shuffle(candidates.filter(compound => !seedIds.has(compound.id)));
 
     function search(startIndex) {
-      if (selected.length === ROUND_SIZE) return selected.slice();
-      const needed = ROUND_SIZE - selected.length;
+      if (selected.length === targetSize) return selected.slice();
+      const needed = targetSize - selected.length;
       if (pool.length - startIndex < needed) return null;
 
       for (let i = startIndex; i < pool.length; i += 1) {
@@ -85,28 +136,41 @@
   }
 
   function chooseRound() {
-    const candidates = data.compounds.filter(compound => compound.aromaIds.length > 0);
-    let round = null;
+    const candidates = candidatesForFilter();
+    const targetSize = roundSize();
+    if (candidates.length < targetSize) {
+      throw new Error(`Not enough compounds for ${state.filter}: ${candidates.length}`);
+    }
 
+    let round = null;
     if (state.roundIndex === 0) {
-      const priority = FIRST_ROUND_PRIORITY.map(id => compoundById.get(id)).filter(Boolean);
+      const candidateIds = new Set(candidates.map(compound => compound.id));
+      const priorityIds = (ROUND_PRIORITY[state.mode] && ROUND_PRIORITY[state.mode][state.filter]) || [];
+      const priority = priorityIds
+        .filter(id => candidateIds.has(id))
+        .map(id => compoundById.get(id))
+        .filter(Boolean)
+        .slice(0, targetSize);
+
       const priorityAromas = new Set();
       const validPriority = priority.every(compound => {
         if (!canJoinRound(compound, priorityAromas)) return false;
         compound.aromaIds.forEach(aromaId => priorityAromas.add(aromaId));
         return true;
       });
-      if (validPriority) round = findUniqueRound(candidates, priority);
+      if (validPriority) round = findUniqueRound(candidates, priority, targetSize);
     }
 
-    if (!round) round = findUniqueRound(candidates);
-    if (!round || round.length !== ROUND_SIZE) throw new Error('Could not build a unique BEGINNER round');
+    if (!round) round = findUniqueRound(candidates, [], targetSize);
+    if (!round || round.length !== targetSize) {
+      throw new Error(`Could not build a unique ${state.mode.toUpperCase()} round for ${state.filter}`);
+    }
     return shuffle(round);
   }
 
   function aromaCardFor(compound) {
     return {
-      id: `beginner-${compound.id}`,
+      id: `${state.mode}-${compound.id}`,
       label: compound.aroma,
       aromaIds: compound.aromaIds.slice(),
       acceptedCompoundIds: [compound.id]
@@ -135,6 +199,44 @@
     </button>`;
   }
 
+  function currentFilter() {
+    return filterById.get(state.filter) || filterById.get('all') || {id:'all',label:'ALL',ja:'全て',count:data.compounds.length};
+  }
+
+  function updateControls() {
+    const filter = currentFilter();
+    const mode = MODE_CONFIG[state.mode];
+    const count = candidatesForFilter().length;
+
+    document.documentElement.style.setProperty('--round-size', String(mode.roundSize));
+
+    els.filterButtons.forEach(button => {
+      const active = button.dataset.drinkFilter === state.filter;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    els.modeButtons.forEach(button => {
+      const active = button.dataset.gameMode === state.mode;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+
+    if (els.filterStatus) els.filterStatus.textContent = `${filter.label} · ${count}`;
+    if (els.modeMeta) els.modeMeta.textContent = mode.meta;
+    if (els.matchTotal) els.matchTotal.textContent = String(mode.roundSize);
+    if (els.resultKicker) els.resultKicker.textContent = `ROUND CLEAR / ${filter.label}`;
+    if (els.resultMode) els.resultMode.textContent = `${mode.level} / ${mode.label}`;
+    if (els.resultTitle) els.resultTitle.textContent = `${mode.roundSize} / ${mode.roundSize} MATCHED`;
+
+    if (els.gameNote) {
+      const pool = state.filter === 'all' ? '全51化合物' : `${filter.ja}の香り成分`;
+      const difficulty = state.mode === 'hard'
+        ? `HARDは${mode.roundSize}組。より専門的な成分を優先して出題します。`
+        : `EASYは${mode.roundSize}組。香りの答えが重ならない組み合わせです。`;
+      els.gameNote.textContent = `${pool}から出題。${difficulty} 構造式は正解時に短く表示します。`;
+    }
+  }
+
   function renderRound() {
     state.round = chooseRound();
     state.leftSelected = null;
@@ -152,11 +254,28 @@
     els.compoundColumn.innerHTML = state.round.map(compoundButton).join('');
     els.aromaColumn.innerHTML = rightCards.map(aromaButton).join('');
     els.layer.innerHTML = '';
+    updateControls();
     updateStats();
 
     els.board.querySelectorAll('.match-card').forEach(button => button.addEventListener('click', onCardClick));
     requestAnimationFrame(drawConnections);
     state.roundIndex += 1;
+  }
+
+  function setFilter(filterId) {
+    if (!filterById.has(filterId) || state.filter === filterId) return;
+    state.filter = filterId;
+    state.roundIndex = 0;
+    renderRound();
+    els.live.textContent = `${currentFilter().ja}モードに変更しました。`;
+  }
+
+  function setMode(modeId) {
+    if (!MODE_CONFIG[modeId] || state.mode === modeId) return;
+    state.mode = modeId;
+    state.roundIndex = 0;
+    renderRound();
+    els.live.textContent = `${MODE_CONFIG[modeId].label}に変更しました。`;
   }
 
   function onCardClick(event) {
@@ -219,7 +338,7 @@
     updateStats();
     drawConnections();
 
-    if (state.matched.size === ROUND_SIZE) finishRound();
+    if (state.matched.size === roundSize()) finishRound();
   }
 
   function handleWrong() {
@@ -283,7 +402,8 @@
     stopClock();
     updateStats();
     const seconds = elapsedSeconds();
-    const score = Math.max(100, 1200 - Math.round(seconds * 8) - state.misses * 80);
+    const base = state.mode === 'hard' ? 1700 : 1200;
+    const score = Math.max(100, base - Math.round(seconds * 8) - state.misses * 80);
     window.setTimeout(() => {
       hideFlash();
       els.score.textContent = String(score);
@@ -328,6 +448,8 @@
 
   els.newRound.addEventListener('click', renderRound);
   els.replay.addEventListener('click', renderRound);
+  els.filterButtons.forEach(button => button.addEventListener('click', () => setFilter(button.dataset.drinkFilter)));
+  els.modeButtons.forEach(button => button.addEventListener('click', () => setMode(button.dataset.gameMode)));
   window.addEventListener('resize', scheduleDraw, {passive:true});
   window.addEventListener('orientationchange', scheduleDraw, {passive:true});
   document.addEventListener('visibilitychange', () => {
