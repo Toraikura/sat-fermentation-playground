@@ -76,6 +76,18 @@
     };
   }
 
+  function hydrateDeferredAromaImages(root) {
+    root.querySelectorAll('img[data-aroma-src]').forEach(image => {
+      const src = image.dataset.aromaSrc;
+      if (!src) return;
+      image.loading = 'eager';
+      image.decoding = 'async';
+      image.setAttribute('fetchpriority', 'high');
+      image.src = src;
+      delete image.dataset.aromaSrc;
+    });
+  }
+
   function openMobileDetail(sourceCard) {
     if (!MOBILE_DETAIL.matches) return;
     const compound = byId[sourceCard.dataset.id];
@@ -91,6 +103,7 @@
     expanded.classList.add('mobile-expanded-card');
     expanded.removeAttribute('tabindex');
     expanded.setAttribute('aria-expanded', 'true');
+    hydrateDeferredAromaImages(expanded);
     expanded.querySelectorAll('img').forEach(image => {
       image.loading = 'eager';
       image.decoding = 'async';
