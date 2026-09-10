@@ -1,5 +1,5 @@
-/* AROMA LAB mobile compact-card + enlarged flip detail */
-.mobile-card-modal{position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));background:rgba(23,27,24,.76);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s ease}.mobile-card-modal.open{opacity:1;visibility:visible;pointer-events:auto}.mobile-card-dialog{position:relative;width:min(100%,430px);height:min(78dvh,660px);min-height:520px;padding-top:42px;transform:translateY(18px) scale(.965);transition:transform .24s ease}.mobile-card-modal.open .mobile-card-dialog{transform:none}.mobile-card-close{position:absolute;right:0;top:0;z-index:5;min-width:94px;height:34px;border:1.5px solid var(--paper);border-radius:999px;background:var(--ink);color:var(--paper);font:900 9px var(--mono);letter-spacing:.09em;box-shadow:3px 3px 0 var(--orange)}.mobile-card-host{height:100%;min-height:0;perspective:1500px;-webkit-perspective:1500px}.mobile-expanded-card{position:relative;width:100%;height:100%;min-width:0;aspect-ratio:auto!important;perspective:1500px!important;-webkit-perspective:1500px!important;outline:none;isolation:isolate}.mobile-expanded-card .card-inner{position:absolute;inset:0;transform:none!important;-webkit-transform:none!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important;transition:none!important}.mobile-expanded-card .face{display:flex!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important;will-change:transform;transition:transform .62s cubic-bezier(.2,.8,.2,1)!important;-webkit-transition:-webkit-transform .62s cubic-bezier(.2,.8,.2,1)!important}.mobile-expanded-card .front{transform:rotateY(0deg)!important;-webkit-transform:rotateY(0deg)!important}.mobile-expanded-card .back-face{display:flex!important;transform:rotateY(180deg)!important;-webkit-transform:rotateY(180deg)!important}.mobile-expanded-card.is-flipped .front{transform:rotateY(-180deg)!important;-webkit-transform:rotateY(-180deg)!important}.mobile-expanded-card.is-flipped .back-face{transform:rotateY(0deg)!important;-webkit-transform:rotateY(0deg)!important}.mobile-detail-open{overflow:hidden}
+/* AROMA LABO mobile compact-card + enlarged flip detail */
+.mobile-card-modal{position:fixed;inset:0;z-index:140;display:grid;place-items:center;padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));background:rgba(23,27,24,.76);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s ease}.mobile-card-modal.open{opacity:1;visibility:visible;pointer-events:auto}.mobile-card-dialog{position:relative;width:min(100%,430px);max-width:calc(100vw - 28px);min-width:0;height:min(78dvh,660px);min-height:520px;padding-top:42px;transform:translateY(18px) scale(.965);transition:transform .24s ease}.mobile-card-modal.open .mobile-card-dialog{transform:none}.mobile-card-close{position:absolute;right:0;top:0;z-index:5;min-width:94px;height:34px;border:1.5px solid var(--paper);border-radius:999px;background:var(--ink);color:var(--paper);font:900 9px var(--mono);letter-spacing:.09em;box-shadow:3px 3px 0 var(--orange)}.mobile-card-host{width:100%;height:100%;min-width:0;min-height:0;max-width:100%;perspective:1500px;-webkit-perspective:1500px}.mobile-expanded-card{position:relative;width:100%;max-width:100%;height:100%;min-width:0;aspect-ratio:auto!important;perspective:1500px!important;-webkit-perspective:1500px!important;outline:none;isolation:isolate}.mobile-expanded-card .card-inner{position:absolute;inset:0;min-width:0;max-width:100%;transform:none!important;-webkit-transform:none!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important;transition:none!important}.mobile-expanded-card .face{display:flex!important;min-width:0;max-width:100%;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;transform-style:preserve-3d!important;-webkit-transform-style:preserve-3d!important;will-change:transform;transition:transform .62s cubic-bezier(.2,.8,.2,1)!important;-webkit-transition:-webkit-transform .62s cubic-bezier(.2,.8,.2,1)!important}.mobile-expanded-card .front{transform:rotateY(0deg)!important;-webkit-transform:rotateY(0deg)!important}.mobile-expanded-card .back-face{display:flex!important;transform:rotateY(180deg)!important;-webkit-transform:rotateY(180deg)!important}.mobile-expanded-card.is-flipped .front{transform:rotateY(-180deg)!important;-webkit-transform:rotateY(-180deg)!important}.mobile-expanded-card.is-flipped .back-face{transform:rotateY(0deg)!important;-webkit-transform:rotateY(0deg)!important}.mobile-detail-open{overflow:hidden}
 
 @media(max-width:600px){
   .cards{grid-template-columns:1fr!important;gap:11px!important}
@@ -18,35 +18,38 @@
   #cards .name-front-en{max-width:88%;font-size:7.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #cards .name-front-foot{position:absolute;left:0;right:0;bottom:0;padding:8px 11px;font-size:7px}
 
-  .mobile-card-dialog{height:min(80dvh,680px);min-height:540px}
+  .mobile-card-dialog{width:100%;max-width:calc(100vw - 28px);min-width:0;height:min(80dvh,680px);min-height:540px}
+  .mobile-card-host,.mobile-expanded-card,.mobile-expanded-card .card-inner,.mobile-expanded-card .face,.mobile-expanded-card .reveal-body,.mobile-expanded-card .reveal-stage{min-width:0!important;max-width:100%!important}
   .mobile-expanded-card{height:100%!important}
-  .mobile-expanded-card .reveal-head{height:36px;flex:0 0 36px;padding:10px 12px 8px;font-size:7px}
-  .mobile-expanded-card .reveal-body{grid-template-rows:42% 36% 22%}
+  .mobile-expanded-card .reveal-head{height:36px;flex:0 0 36px;padding:10px 12px 8px;font-size:7px;min-width:0;max-width:100%;overflow:hidden}
+  .mobile-expanded-card .reveal-head span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mobile-expanded-card .reveal-body{grid-template-rows:42% 36% 22%;overflow:hidden}
   .mobile-expanded-card .stage-label{left:10px;top:8px;font-size:6.5px}
-  .mobile-expanded-card .aroma-stage{grid-template-columns:minmax(0,1fr) 112px;padding:25px 10px 9px;gap:9px}
-  .mobile-expanded-card .aroma-stage-copy{display:block;font-size:11.5px;line-height:1.35}
-  .mobile-expanded-card .aroma-stage-images{height:100%;gap:5px}
-  .mobile-expanded-card .aroma-stage-images .final-aroma-img{width:min(50%,155px);height:100%;max-height:170px;object-fit:contain;object-position:50% 50%}
-  .mobile-expanded-card .molecule-stage{grid-template-columns:minmax(0,1fr) 132px;padding:25px 10px 9px;gap:10px}
-  .mobile-expanded-card .molecule-copy{display:flex;gap:4px}
+  .mobile-expanded-card .aroma-stage{grid-template-columns:minmax(0,1fr) minmax(0,112px);padding:25px 10px 9px;gap:9px;overflow:hidden}
+  .mobile-expanded-card .aroma-stage-copy{display:block;min-width:0;font-size:11.5px;line-height:1.35;overflow-wrap:anywhere}
+  .mobile-expanded-card .aroma-stage-images{min-width:0;height:100%;gap:5px;overflow:hidden}
+  .mobile-expanded-card .aroma-stage-images .final-aroma-img{width:min(50%,155px);height:100%;max-height:170px;min-width:0;object-fit:contain;object-position:50% 50%}
+  .mobile-expanded-card .molecule-stage{grid-template-columns:minmax(0,1fr) minmax(0,132px);padding:25px 10px 9px;gap:10px;overflow:hidden}
+  .mobile-expanded-card .molecule-copy{display:flex;min-width:0;gap:4px;overflow-wrap:anywhere}
   .mobile-expanded-card .molecule-copy strong{font-size:12px;line-height:1.16}
   .mobile-expanded-card .molecule-copy span{font-size:7px}
   .mobile-expanded-card .molecule-copy em{font-size:7px}
   .mobile-expanded-card .molecule-copy small{display:block;font-size:6.5px;line-height:1.35}
-  .mobile-expanded-card .final-structure{padding:6px}
-  .mobile-expanded-card .final-structure img{max-height:132px;object-position:50% 50%}
-  .mobile-expanded-card .drinks-stage{padding:25px 10px 9px}
-  .mobile-expanded-card .drink-ref{min-height:38px}
+  .mobile-expanded-card .final-structure{min-width:0;max-width:100%;padding:6px}
+  .mobile-expanded-card .final-structure img{max-width:100%;max-height:132px;object-position:50% 50%}
+  .mobile-expanded-card .drinks-stage{min-width:0;max-width:100%;padding:25px 10px 9px;overflow:hidden}
+  .mobile-expanded-card .final-drink-rail{min-width:0;max-width:100%;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .mobile-expanded-card .drink-ref{min-width:0;max-width:100%;min-height:38px;padding-inline:1px}
   .mobile-expanded-card .drink-ref span{font-size:6px}
   .mobile-expanded-card .drink-ref strong{font-size:7px}
-  .mobile-expanded-card .drinks-stage .related{font-size:7px;margin-top:7px}
+  .mobile-expanded-card .drinks-stage .related{max-width:100%;font-size:7px;margin-top:7px;white-space:normal;overflow-wrap:anywhere}
 }
 
 @media(max-width:390px){
   #cards .card{height:148px!important}
-  .mobile-card-dialog{height:min(82dvh,650px);min-height:520px}
-  .mobile-expanded-card .aroma-stage{grid-template-columns:minmax(0,1fr) 100px}
-  .mobile-expanded-card .molecule-stage{grid-template-columns:minmax(0,1fr) 118px}
+  .mobile-card-dialog{width:100%;max-width:calc(100vw - 28px);min-width:0;height:min(82dvh,650px);min-height:520px}
+  .mobile-expanded-card .aroma-stage{grid-template-columns:minmax(0,1fr) minmax(0,100px)}
+  .mobile-expanded-card .molecule-stage{grid-template-columns:minmax(0,1fr) minmax(0,118px)}
   .mobile-expanded-card .aroma-stage-copy{font-size:10.5px}
   .mobile-expanded-card .molecule-copy strong{font-size:11px}
 }
