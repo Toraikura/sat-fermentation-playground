@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f3efe3">
-  <meta name="description" content="AROMA LABの51化合物から、香り成分名と香りを結びつける6組のマッチングゲーム。">
+  <meta name="description" content="AROMA LABの51化合物から、香り成分名と香りを結びつけるマッチングゲーム。ALL・日本酒・焼酎／泡盛・ワイン・ビール・酒をまたぐ成分から選び、EASYとHARDで遊べます。">
   <title>AROMA MATCH — AROMA LAB</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./modes.css?v=20260910c">
 </head>
 <body>
   <header class="topbar">
@@ -23,10 +24,28 @@
         <h1 id="gameTitle">AROMA <span>MATCH</span></h1>
         <p>香り成分と、その香りを結べ。</p>
       </div>
-      <div class="mode-card" aria-label="ゲームモード">
-        <small>MODE</small>
-        <strong>BEGINNER</strong>
-        <span>6 PAIRS / UNIQUE ANSWERS</span>
+      <div class="mode-card" aria-label="ゲーム難易度">
+        <small>LEVEL</small>
+        <div class="mode-switch" role="group" aria-label="難易度を選ぶ">
+          <button type="button" class="active" data-game-mode="easy" aria-pressed="true"><span>01</span><strong>EASY</strong></button>
+          <button type="button" data-game-mode="hard" aria-pressed="false"><span>02</span><strong>HARD</strong></button>
+        </div>
+        <span id="modeMeta">6 PAIRS / UNIQUE ANSWERS</span>
+      </div>
+    </section>
+
+    <section class="match-taxonomy" aria-label="出題する酒類を選ぶ">
+      <div class="taxonomy-head">
+        <small>CHOOSE A DRINK</small>
+        <span id="filterStatus">ALL · 51</span>
+      </div>
+      <div class="taxonomy-scroll" role="group" aria-label="酒類カテゴリ">
+        <button type="button" class="taxonomy-tab active" data-drink-filter="all" aria-pressed="true"><strong>ALL</strong><small>全て · 51</small></button>
+        <button type="button" class="taxonomy-tab" data-drink-filter="sake" aria-pressed="false"><strong>SAKE</strong><small>日本酒 · 19</small></button>
+        <button type="button" class="taxonomy-tab" data-drink-filter="shochu" aria-pressed="false"><strong>SHOCHU</strong><small>焼酎・泡盛 · 20</small></button>
+        <button type="button" class="taxonomy-tab" data-drink-filter="wine" aria-pressed="false"><strong>WINE</strong><small>ワイン · 38</small></button>
+        <button type="button" class="taxonomy-tab" data-drink-filter="beer" aria-pressed="false"><strong>BEER</strong><small>ビール · 17</small></button>
+        <button type="button" class="taxonomy-tab" data-drink-filter="cross" aria-pressed="false"><strong>CROSS-DRINK</strong><small>酒をまたぐ · 21</small></button>
       </div>
     </section>
 
@@ -36,7 +55,7 @@
 
     <section class="game-panel" aria-label="AROMA MATCHゲーム">
       <div class="score-strip">
-        <div><small>MATCH</small><strong><span id="matchCount">0</span>/6</strong></div>
+        <div><small>MATCH</small><strong><span id="matchCount">0</span>/<span id="matchTotal">6</span></strong></div>
         <div><small>TIME</small><strong id="timeValue">0.0s</strong></div>
         <div><small>MISS</small><strong id="missValue">0</strong></div>
         <button id="newRound" type="button">NEW ROUND ↻</button>
@@ -50,13 +69,13 @@
         <div class="match-column aroma-column" id="aromaColumn" aria-label="香り"></div>
       </div>
 
-      <p class="game-note">BEGINNERは、51化合物の中から香りの組み合わせが重複しないものだけを自動選択。構造式は正解時だけ短く表示します。</p>
+      <p class="game-note" id="gameNote">全51化合物から出題。EASYは6組。香りの答えが重ならない組み合わせです。構造式は正解時に短く表示します。</p>
       <div class="sr-only" id="liveStatus" aria-live="polite"></div>
     </section>
 
     <section class="expert-note">
-      <div><small>NEXT MODE</small><strong>EXPERT / MULTI-MATCH</strong></div>
-      <p>データは「化合物 ↔ 香り概念」を多対多で保持。今後、1つの香りが複数分子につながるモードを追加できます。</p>
+      <div><small>AROMA LAB TAXONOMY</small><strong>SAKE → SHOCHU → WINE → BEER → CROSS</strong></div>
+      <p>AROMA LABと同じ酒類分類を使用。CROSS-DRINKでは、複数の酒類に現れる同じ分子だけを出題します。</p>
     </section>
   </main>
 
@@ -70,20 +89,22 @@
 
   <div class="result-layer" id="resultLayer" hidden>
     <section class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
-      <div class="result-kicker">ROUND CLEAR</div>
+      <div class="result-kicker" id="resultKicker">ROUND CLEAR / ALL</div>
+      <div class="result-mode" id="resultMode">LEVEL 1 / EASY</div>
       <h2 id="resultTitle">6 / 6 MATCHED</h2>
       <div class="result-score"><span>SCORE</span><strong id="scoreValue">0</strong></div>
       <dl>
         <div><dt>TIME</dt><dd id="resultTime">0.0s</dd></div>
         <div><dt>MISS</dt><dd id="resultMiss">0</dd></div>
       </dl>
-      <p>Score = 1200 − TIME×8 − MISS×80</p>
+      <p>EASY BASE 1200 / HARD BASE 1700 · TIME −8/s · MISS −80</p>
       <button id="replayButton" type="button">REPLAY ↻</button>
       <a href="../">BACK TO AROMA LAB →</a>
     </section>
   </div>
 
   <script src="./data.js"></script>
-  <script src="./app.js"></script>
+  <script src="./taxonomy.js?v=20260910c"></script>
+  <script src="./app.js?v=20260910c"></script>
 </body>
 </html>
