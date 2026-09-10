@@ -5,7 +5,17 @@
   if (!data || !Array.isArray(data.compounds)) throw new Error('AROMA_MATCH_DATA is missing');
 
   const ROUND_SIZE = 6;
-  const FIRST_ROUND_PRIORITY = ['ethyl-acetate','isoamyl-acetate','4vg','dms'];
+  const ROUND_PRIORITY = {
+    all: ['ethyl-acetate','isoamyl-acetate','4vg','dms'],
+    sake: ['isoamyl-acetate','ethyl-hexanoate','isovaleraldehyde','dms'],
+    beer: ['isoamyl-acetate','4vg','dms','diacetyl'],
+    wine: ['ethyl-acetate','tca246','3mh','tdn'],
+    shochu: ['ethyl-acetate','isoamyl-acetate','furfural','h2s']
+  };
+  const filters = Array.isArray(data.filters) && data.filters.length
+    ? data.filters
+    : [{id:'all',label:'ALL',ja:'全て'}];
+  const filterById = new Map(filters.map(filter => [filter.id, filter]));
   const aromaById = new Map(data.aromas.map(aroma => [aroma.id, aroma]));
   const compoundById = new Map(data.compounds.map(compound => [compound.id, compound]));
 
@@ -23,13 +33,18 @@
     structureImage: document.getElementById('structureImage'),
     structureName: document.getElementById('structureName'),
     result: document.getElementById('resultLayer'),
+    resultKicker: document.getElementById('resultKicker'),
     score: document.getElementById('scoreValue'),
     resultTime: document.getElementById('resultTime'),
     resultMiss: document.getElementById('resultMiss'),
-    replay: document.getElementById('replayButton')
+    replay: document.getElementById('replayButton'),
+    filterStatus: document.getElementById('filterStatus'),
+    gameNote: document.getElementById('gameNote'),
+    filterButtons: Array.from(document.querySelectorAll('[data-drink-filter]'))
   };
 
   const state = {
+    filter: 'all',
     roundIndex: 0,
     round: [],
     leftSelected: null,
@@ -50,6 +65,15 @@
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  function isInFilter(compound, filterId = state.filter) {
+    if (filterId === 'all') return true;
+    return Array.isArray(compound.categories) && compound.categories.includes(filterId);
+  }
+
+  function candidatesForFilter(filterId = state.filter) {
+    return data.compounds.filter(compound => compound.aromaIds.length > 0 && isInFilter(compound, filterId));
   }
 
   function canJoinRound(compound, usedAromas) {
@@ -85,11 +109,19 @@
   }
 
   function chooseRound() {
-    const candidates = data.compounds.filter(compound => compound.aromaIds.length > 0);
-    let round = null;
+    const candidates = candidatesForFilter();
+    if (candidates.length < ROUND_SIZE) {
+      throw new Error(`Not enough compounds for ${state.filter}: ${candidates.length}`);
+    }
 
+    let round = null;
     if (state.roundIndex === 0) {
-      const priority = FIRST_ROUND_PRIORITY.map(id => compoundById.get(id)).filter(Boolean);
+      const candidateIds = new Set(candidates.map(compound => compound.id));
+      const priorityIds = ROUND_PRIORITY[state.filter] || [];
+      const priority = priorityIds
+        .filter(id => candidateIds.has(id))
+        .map(id => compoundById.get(id))
+        .filter(Boolean);
       const priorityAromas = new Set();
       const validPriority = priority.every(compound => {
         if (!canJoinRound(compound, priorityAromas)) return false;
@@ -100,7 +132,9 @@
     }
 
     if (!round) round = findUniqueRound(candidates);
-    if (!round || round.length !== ROUND_SIZE) throw new Error('Could not build a unique BEGINNER round');
+    if (!round || round.length !== ROUND_SIZE) {
+      throw new Error(`Could not build a unique BEGINNER round for ${state.filter}`);
+    }
     return shuffle(round);
   }
 
@@ -135,6 +169,26 @@
     </button>`;
   }
 
+  function filterLabel(filterId = state.filter) {
+    return filterById.get(filterId) || filterById.get('all') || {id:'all',label:'ALL',ja:'全て'};
+  }
+
+  function updateFilterUI() {
+    const filter = filterLabel();
+    const count = candidatesForFilter().length;
+    els.filterButtons.forEach(button => {
+      const active = button.dataset.drinkFilter === state.filter;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    if (els.filterStatus) els.filterStatus.textContent = `${filter.label} · ${count} COMPOUNDS`;
+    if (els.gameNote) {
+      const pool = state.filter === 'all' ? '51化合物全体' : `${filter.ja}に関係する香り成分`;
+      els.gameNote.textContent = `BEGINNERは、${pool}から香りの組み合わせが重複しない6組を自動選択。構造式は正解時だけ短く表示します。`;
+    }
+    if (els.resultKicker) els.resultKicker.textContent = `ROUND CLEAR / ${filter.label}`;
+  }
+
   function renderRound() {
     state.round = chooseRound();
     state.leftSelected = null;
@@ -152,11 +206,21 @@
     els.compoundColumn.innerHTML = state.round.map(compoundButton).join('');
     els.aromaColumn.innerHTML = rightCards.map(aromaButton).join('');
     els.layer.innerHTML = '';
+    updateFilterUI();
     updateStats();
 
     els.board.querySelectorAll('.match-card').forEach(button => button.addEventListener('click', onCardClick));
     requestAnimationFrame(drawConnections);
     state.roundIndex += 1;
+  }
+
+  function setFilter(filterId) {
+    if (!filterById.has(filterId) || state.filter === filterId) return;
+    state.filter = filterId;
+    state.roundIndex = 0;
+    renderRound();
+    const filter = filterLabel();
+    els.live.textContent = `${filter.ja}モード。${candidatesForFilter().length}化合物から出題します。`;
   }
 
   function onCardClick(event) {
@@ -289,6 +353,7 @@
       els.score.textContent = String(score);
       els.resultTime.textContent = `${seconds.toFixed(1)}s`;
       els.resultMiss.textContent = String(state.misses);
+      updateFilterUI();
       els.result.hidden = false;
       els.replay.focus();
     }, 940);
@@ -328,11 +393,15 @@
 
   els.newRound.addEventListener('click', renderRound);
   els.replay.addEventListener('click', renderRound);
+  els.filterButtons.forEach(button => {
+    button.addEventListener('click', () => setFilter(button.dataset.drinkFilter));
+  });
   window.addEventListener('resize', scheduleDraw, {passive:true});
   window.addEventListener('orientationchange', scheduleDraw, {passive:true});
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && state.startedAt !== null && state.finishedAt === null) updateStats();
   });
 
+  updateFilterUI();
   renderRound();
 })();
