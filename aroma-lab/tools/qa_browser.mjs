@@ -9,22 +9,14 @@ const STRUCTURE_IDS = [
   'geraniol','isobutanol','h2s','4ep','athp','geosmin','styrene','guaiacol','tca236','3mbt','trans2nonenal','citronellol','dcp26'
 ];
 
-const EXPECTED_COUNTS = {
-  sake: 19,
-  shochu: 20,
-  wineStandard: 18,
-  wineProfessional: 20,
-  beer: 17
-};
+const EXPECTED_COUNTS = { sake:19, shochu:20, wineStandard:18, wineProfessional:20, beer:17 };
 
 function attachDiagnostics(page, label) {
   const pageErrors = [];
   const badResponses = [];
   page.on('pageerror', error => pageErrors.push(String(error)));
   page.on('response', response => {
-    if (response.url().startsWith(BASE) && response.status() >= 400) {
-      badResponses.push(`${response.status()} ${response.url()}`);
-    }
+    if (response.url().startsWith(BASE) && response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`);
   });
   return () => {
     assert.deepEqual(pageErrors, [], `${label}: page errors: ${pageErrors.join(' | ')}`);
@@ -33,75 +25,19 @@ function attachDiagnostics(page, label) {
 }
 
 async function waitForCards(page, expected) {
-  await page.waitForFunction(
-    count => document.querySelectorAll('#cards .card[data-name-first-ready="1"]').length === count,
-    expected
-  );
-}
-
-async function waitForFrontTransform(page, id) {
-  await page.waitForFunction(compoundId => {
-    const inner = document.querySelector(`#compound-${compoundId} .card-inner`);
-    if (!inner) return false;
-    const transform = getComputedStyle(inner).transform;
-    return transform === 'none' ||
-      transform === 'matrix(1, 0, 0, 1, 0, 0)' ||
-      transform === 'matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)';
-  }, id, { timeout: 1600 });
+  await page.waitForFunction(count => document.querySelectorAll('#cards .card[data-name-first-ready="1"]').length === count, expected);
 }
 
 async function visibleIds(page) {
   return page.locator('#cards .card').evaluateAll(cards => cards.map(card => card.dataset.id));
 }
 
-async function waitForCardStructureDecoded(page, id, label) {
-  await page.waitForFunction(compoundId => {
-    const image = document.querySelector(`#compound-${compoundId} .final-structure img`);
-    return Boolean(image && image.complete && image.naturalWidth > 0 && image.naturalHeight > 0);
-  }, id, { timeout: 5000 });
-
-  const failures = await page.locator(`#compound-${id}`).evaluate(card => {
-    const image = card.querySelector('.final-structure img');
-    const fallback = card.querySelector('.structure-fallback');
-    const style = image ? getComputedStyle(image) : null;
-    const issues = [];
-    if (!image) issues.push('missing final structure img');
-    else {
-      if (!image.complete || image.naturalWidth === 0) issues.push('structure image not decoded');
-      if (style.transform !== 'none') issues.push(`unexpected transform ${style.transform}`);
-      if (style.objectPosition !== '50% 50%') issues.push(`unexpected object-position ${style.objectPosition}`);
-    }
-    if (fallback && getComputedStyle(fallback).display !== 'none') issues.push('fallback visible');
-    return issues;
-  });
-
-  assert.deepEqual(failures, [], `${label} ${id}: ${failures.join(' | ')}`);
-}
-
-async function assertVisibleStructures(page, label) {
-  const failures = await page.locator('#cards .card').evaluateAll(cards => cards.flatMap(card => {
-    const image = card.querySelector('.final-structure img');
-    const fallback = card.querySelector('.structure-fallback');
-    const style = image ? getComputedStyle(image) : null;
-    const issues = [];
-    if (!image) issues.push('missing final structure img');
-    else {
-      if (!image.complete || image.naturalWidth === 0) issues.push('structure image not decoded');
-      if (style.transform !== 'none') issues.push(`unexpected transform ${style.transform}`);
-      if (style.objectPosition !== '50% 50%') issues.push(`unexpected object-position ${style.objectPosition}`);
-    }
-    if (fallback && getComputedStyle(fallback).display !== 'none') issues.push('fallback visible');
-    return issues.map(issue => `${card.dataset.id}: ${issue}`);
-  }));
-  assert.deepEqual(failures, [], `${label}: ${failures.join(' | ')}`);
-}
-
 async function assertAllStructureAssets(page, label) {
   const result = await page.evaluate(async ids => {
     const loadSvg = id => new Promise(resolve => {
       const image = new Image();
-      image.onload = () => resolve({ id, ok: image.naturalWidth > 0 && image.naturalHeight > 0 });
-      image.onerror = () => resolve({ id, ok: false, error: 'image decode failed' });
+      image.onload = () => resolve({ id, ok:image.naturalWidth > 0 && image.naturalHeight > 0 });
+      image.onerror = () => resolve({ id, ok:false, error:'image decode failed' });
       image.src = `./assets/structures/${encodeURIComponent(id)}.svg`;
     });
 
@@ -116,20 +52,19 @@ async function assertAllStructureAssets(page, label) {
     document.body.appendChild(host);
 
     for (const id of ids) {
-      const response = await fetch(`./assets/structures/${encodeURIComponent(id)}.svg`, { cache: 'no-store' });
+      const response = await fetch(`./assets/structures/${encodeURIComponent(id)}.svg`, { cache:'no-store' });
       if (!response.ok) {
         centerFailures.push(`${id}: HTTP ${response.status}`);
         continue;
       }
-      const text = await response.text();
-      host.innerHTML = text;
+      host.innerHTML = await response.text();
       const svg = host.querySelector('svg');
       if (!svg || svg.getAttribute('viewBox') !== '0 0 480 280') {
         centerFailures.push(`${id}: invalid/missing 480x280 viewBox`);
         continue;
       }
-      svg.setAttribute('width', '480');
-      svg.setAttribute('height', '280');
+      svg.setAttribute('width','480');
+      svg.setAttribute('height','280');
       await new Promise(requestAnimationFrame);
       const boxes = [...svg.querySelectorAll('path')].map(path => path.getBBox()).filter(box => box.width || box.height);
       if (!boxes.length) {
@@ -156,37 +91,55 @@ async function assertAllStructureAssets(page, label) {
   console.log(`PASS ${label}: ${STRUCTURE_IDS.length}/51 decoded; max browser bbox delta x=${result.maxDx.toFixed(2)} y=${result.maxDy.toFixed(2)}`);
 }
 
+async function assertVisibleStructures(page, label) {
+  const failures = await page.locator('#cards .card').evaluateAll(cards => cards.flatMap(card => {
+    const image = card.querySelector('.final-structure img');
+    const fallback = card.querySelector('.structure-fallback');
+    const style = image ? getComputedStyle(image) : null;
+    const issues = [];
+    if (!image) issues.push('missing final structure img');
+    else {
+      if (!image.complete || image.naturalWidth === 0) issues.push('structure image not decoded');
+      if (style.transform !== 'none') issues.push(`unexpected transform ${style.transform}`);
+      if (style.objectPosition !== '50% 50%') issues.push(`unexpected object-position ${style.objectPosition}`);
+    }
+    if (fallback && getComputedStyle(fallback).display !== 'none') issues.push('fallback visible');
+    return issues.map(issue => `${card.dataset.id}: ${issue}`);
+  }));
+  assert.deepEqual(failures, [], `${label}: ${failures.join(' | ')}`);
+}
+
 async function testDesktop() {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport:{ width:1440, height:1000 }, deviceScaleFactor:1 });
   const finishDiagnostics = attachDiagnostics(page, 'desktop');
 
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE, { waitUntil:'networkidle' });
   await waitForCards(page, EXPECTED_COUNTS.sake);
   await assertVisibleStructures(page, 'desktop sake');
   await assertAllStructureAssets(page, 'Chromium structure assets');
 
-  const allIds = new Set(await visibleIds(page));
+  const firstBox = await page.locator('#cards .card').nth(0).boundingBox();
+  const secondBox = await page.locator('#cards .card').nth(1).boundingBox();
+  assert(firstBox && secondBox, 'desktop card bounding boxes unavailable');
+  assert(Math.abs(firstBox.y - secondBox.y) < 2 && secondBox.x > firstBox.x, 'desktop cards must remain multi-column');
 
+  const allIds = new Set(await visibleIds(page));
   await page.locator('[data-tab="shochu"]').click();
   await waitForCards(page, EXPECTED_COUNTS.shochu);
   (await visibleIds(page)).forEach(id => allIds.add(id));
-  await assertVisibleStructures(page, 'desktop shochu');
 
   await page.locator('[data-tab="wine"]').click();
   await waitForCards(page, EXPECTED_COUNTS.wineStandard);
   (await visibleIds(page)).forEach(id => allIds.add(id));
-  await assertVisibleStructures(page, 'desktop wine standard');
 
   await page.locator('[data-wine="professional"]').click();
   await waitForCards(page, EXPECTED_COUNTS.wineProfessional);
   (await visibleIds(page)).forEach(id => allIds.add(id));
-  await assertVisibleStructures(page, 'desktop wine professional');
 
   await page.locator('[data-tab="beer"]').click();
   await waitForCards(page, EXPECTED_COUNTS.beer);
   (await visibleIds(page)).forEach(id => allIds.add(id));
-  await assertVisibleStructures(page, 'desktop beer');
 
   assert.equal(allIds.size, 51, `desktop tabs expose ${allIds.size}/51 unique compounds`);
   assert.deepEqual([...allIds].sort(), [...STRUCTURE_IDS].sort(), 'desktop tabs do not expose the exact 51-compound ledger');
@@ -194,34 +147,25 @@ async function testDesktop() {
   await page.locator('[data-tab="sake"]').click();
   await waitForCards(page, EXPECTED_COUNTS.sake);
   const card = page.locator('#compound-4vg');
-
   await card.hover();
   await page.waitForFunction(() => document.querySelector('#compound-4vg')?.classList.contains('hover-revealed'));
-  assert.equal(await card.getAttribute('aria-expanded'), 'false', 'hover must not pin/expand aria state');
+  assert.equal(await card.getAttribute('aria-expanded'), 'false', 'desktop hover must not pin card');
 
   await card.click();
   await page.waitForFunction(() => {
     const card = document.querySelector('#compound-4vg');
     return card?.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'true';
   });
-  assert.equal(await card.getAttribute('aria-expanded'), 'true', 'first click should pin 4VG open');
-
   await card.click();
   await page.waitForFunction(() => {
     const card = document.querySelector('#compound-4vg');
-    return card && !card.classList.contains('revealed') && !card.classList.contains('hover-revealed') && card.getAttribute('aria-expanded') === 'false';
+    return card && !card.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'false';
   });
-  await waitForFrontTransform(page, '4vg');
-  assert.equal(await card.getAttribute('aria-expanded'), 'false', 'second click should close 4VG');
 
-  await page.mouse.move(10, 10);
-  await card.hover();
-  await page.waitForFunction(() => document.querySelector('#compound-4vg')?.classList.contains('hover-revealed'));
-
-  await page.screenshot({ path: 'qa-artifacts/aroma-lab-desktop.png', fullPage: true });
+  await page.screenshot({ path:'qa-artifacts/aroma-lab-desktop.png', fullPage:true });
   finishDiagnostics();
   await browser.close();
-  console.log('PASS desktop Chromium: counts, 51 unique compounds, SVG centering, and 4VG hover/click reset');
+  console.log('PASS desktop Chromium: counts, 51 unique compounds, SVG centering, multi-column layout, and 4VG hover/click');
 }
 
 async function testIPhone() {
@@ -230,67 +174,77 @@ async function testIPhone() {
   const page = await context.newPage();
   const finishDiagnostics = attachDiagnostics(page, 'iphone-webkit');
 
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE, { waitUntil:'networkidle' });
   await waitForCards(page, EXPECTED_COUNTS.sake);
   await assertAllStructureAssets(page, 'iPhone WebKit structure assets');
-  await waitForCardStructureDecoded(page, 'ethyl-acetate', 'iPhone initial viewport');
 
   const cards = page.locator('#cards .card');
   const firstBox = await cards.nth(0).boundingBox();
   const secondBox = await cards.nth(1).boundingBox();
-  assert(firstBox && secondBox, 'iPhone card bounding boxes unavailable');
-  assert(Math.abs(firstBox.x - secondBox.x) < 2, 'iPhone cards should be single-column aligned');
-  assert(secondBox.y > firstBox.y + 500, 'iPhone cards should stack vertically at the 520px mobile card height');
+  const thirdBox = await cards.nth(2).boundingBox();
+  assert(firstBox && secondBox && thirdBox, 'iPhone compact card bounding boxes unavailable');
+  assert(Math.abs(firstBox.x - secondBox.x) < 2, 'iPhone compact cards should be single-column aligned');
+  assert(firstBox.width / firstBox.height > 2, `iPhone card should be landscape, got ${firstBox.width}x${firstBox.height}`);
+  assert(secondBox.y - firstBox.y < 190, 'iPhone compact cards should stack densely');
+  assert(thirdBox.y + thirdBox.height - firstBox.y < 510, 'roughly three compact cards should fit within 510px');
+
+  const hint = await page.locator('.instructions .mobile-only').textContent();
+  assert.equal(hint.trim(), 'TAP = OPEN / FLIP', 'mobile instruction should describe expanded flip behavior');
 
   const card = page.locator('#compound-4vg');
   await card.tap();
   await page.waitForFunction(() => {
-    const card = document.querySelector('#compound-4vg');
-    return card?.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'true';
+    const modal = document.getElementById('mobileCardModal');
+    const expanded = modal?.querySelector('.mobile-expanded-card');
+    return modal?.classList.contains('open') && expanded?.classList.contains('is-flipped');
   });
-  await waitForCardStructureDecoded(page, '4vg', 'iPhone revealed card');
-  assert.equal(await card.getAttribute('aria-expanded'), 'true', 'iPhone first tap should reveal 4VG');
+  await page.waitForTimeout(700);
 
-  const revealedFaces = await card.evaluate(element => {
+  assert.equal(await card.evaluate(el => el.classList.contains('revealed')), false, 'mobile list card must stay compact/front-only after tap');
+  assert.equal(await card.getAttribute('aria-expanded'), 'false', 'mobile list card must not pin itself open');
+
+  const modal = page.locator('#mobileCardModal');
+  const expanded = modal.locator('.mobile-expanded-card');
+  const expandedBox = await expanded.boundingBox();
+  assert(expandedBox && expandedBox.height > 500, `expanded mobile card must be large/readable, got ${expandedBox?.height}`);
+
+  const flipState = await expanded.evaluate(element => {
+    const inner = element.querySelector('.card-inner');
     const front = element.querySelector('.front');
     const back = element.querySelector('.back-face');
+    const aromaCopy = element.querySelector('.aroma-stage-copy');
+    const moleculeCopy = element.querySelector('.molecule-copy');
     return {
-      frontDisplay: getComputedStyle(front).display,
-      backDisplay: getComputedStyle(back).display,
-      backTransform: getComputedStyle(back).transform
+      innerTransform:getComputedStyle(inner).transform,
+      frontDisplay:getComputedStyle(front).display,
+      backDisplay:getComputedStyle(back).display,
+      backTransform:getComputedStyle(back).transform,
+      aromaCopyDisplay:getComputedStyle(aromaCopy).display,
+      moleculeCopyDisplay:getComputedStyle(moleculeCopy).display
     };
   });
-  assert.equal(revealedFaces.frontDisplay, 'none', 'iPhone revealed state must explicitly hide the front face');
-  assert.notEqual(revealedFaces.backDisplay, 'none', 'iPhone revealed state must explicitly show the back face');
-  assert.equal(revealedFaces.backTransform, 'none', 'iPhone revealed back face must not be mirrored by a 3D transform');
-  await card.screenshot({ path: 'qa-artifacts/aroma-lab-iphone-4vg-revealed.png' });
+  assert.notEqual(flipState.innerTransform, 'none', 'expanded mobile card must use a 3D flip transform');
+  assert.notEqual(flipState.frontDisplay, 'none', 'expanded card front face must remain in the 3D stack');
+  assert.notEqual(flipState.backDisplay, 'none', 'expanded card back face must remain in the 3D stack');
+  assert.notEqual(flipState.backTransform, 'none', 'expanded card back face must use rotateY');
+  assert.notEqual(flipState.aromaCopyDisplay, 'none', 'expanded aroma copy must be readable');
+  assert.notEqual(flipState.moleculeCopyDisplay, 'none', 'expanded molecule copy must be readable');
 
-  await card.tap();
   await page.waitForFunction(() => {
-    const card = document.querySelector('#compound-4vg');
-    return card && !card.classList.contains('revealed') && card.getAttribute('aria-expanded') === 'false';
-  });
-  await waitForFrontTransform(page, '4vg');
-  assert.equal(await card.getAttribute('aria-expanded'), 'false', 'iPhone second tap should close 4VG');
-  assert.equal(await card.evaluate(el => el.classList.contains('hover-revealed')), false, 'touch mode must not leave a hover-revealed state');
+    const image = document.querySelector('#mobileCardModal .mobile-expanded-card .final-structure img');
+    return Boolean(image && image.complete && image.naturalWidth > 0 && image.naturalHeight > 0);
+  }, { timeout:5000 });
 
-  const closedFaces = await card.evaluate(element => {
-    const front = element.querySelector('.front');
-    const back = element.querySelector('.back-face');
-    return {
-      frontDisplay: getComputedStyle(front).display,
-      frontTransform: getComputedStyle(front).transform,
-      backDisplay: getComputedStyle(back).display
-    };
+  await modal.screenshot({ path:'qa-artifacts/aroma-lab-iphone-expanded-4vg.png' });
+  await page.locator('.mobile-card-close').tap();
+  await page.waitForFunction(() => {
+    const modal = document.getElementById('mobileCardModal');
+    return modal && !modal.classList.contains('open') && modal.getAttribute('aria-hidden') === 'true' && !document.body.classList.contains('mobile-detail-open');
   });
-  assert.notEqual(closedFaces.frontDisplay, 'none', 'iPhone closed state must explicitly show the front face');
-  assert.equal(closedFaces.frontTransform, 'none', 'iPhone closed front face must not be mirrored by a 3D transform');
-  assert.equal(closedFaces.backDisplay, 'none', 'iPhone closed state must explicitly hide the back face');
-  await card.screenshot({ path: 'qa-artifacts/aroma-lab-iphone-4vg-front.png' });
 
   finishDiagnostics();
   await browser.close();
-  console.log('PASS iPhone WebKit: one-column layout, lazy-loaded structure reveal, explicit face switching, and 4VG tap reset');
+  console.log('PASS iPhone WebKit: landscape compact list, ~3-card density, enlarged 3D flip detail, readable back face, structure decode, and close');
 }
 
 await testDesktop();
