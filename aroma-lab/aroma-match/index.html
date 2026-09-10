@@ -3,11 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="theme-color" content="#f3efe3">
   <meta name="description" content="AROMA LABの51化合物から、香り成分名と香りを結びつけるマッチングゲーム。ALL・日本酒・焼酎／泡盛・ワイン・ビール・酒をまたぐ成分から選び、EASYとHARDで遊べます。">
   <title>AROMA MATCH — AROMA LAB</title>
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./modes.css?v=20260910c">
+  <link rel="stylesheet" href="./styles.css?v=20260910d">
+  <link rel="stylesheet" href="./modes.css?v=20260910d">
 </head>
 <body>
   <header class="topbar">
@@ -25,10 +28,10 @@
         <p>香り成分と、その香りを結べ。</p>
       </div>
       <div class="mode-card" aria-label="ゲーム難易度">
-        <small>LEVEL</small>
+        <div class="mode-card-head"><small>SELECT LEVEL</small><span>TAP TO CHANGE</span></div>
         <div class="mode-switch" role="group" aria-label="難易度を選ぶ">
-          <button type="button" class="active" data-game-mode="easy" aria-pressed="true"><span>01</span><strong>EASY</strong></button>
-          <button type="button" data-game-mode="hard" aria-pressed="false"><span>02</span><strong>HARD</strong></button>
+          <button type="button" class="active" data-game-mode="easy" aria-pressed="true"><span>01</span><strong>EASY</strong><small>6 PAIRS</small></button>
+          <button type="button" data-game-mode="hard" aria-pressed="false"><span>02</span><strong>HARD</strong><small>8 PAIRS</small></button>
         </div>
         <span id="modeMeta">6 PAIRS / UNIQUE ANSWERS</span>
       </div>
@@ -74,7 +77,7 @@
     </section>
 
     <section class="expert-note">
-      <div><small>AROMA LAB TAXONOMY</small><strong>SAKE → SHOCHU → WINE → BEER → CROSS</strong></div>
+      <div><small>AROMA LAB TAXONOMY</small><strong>ALL → SAKE → SHOCHU → WINE → BEER → CROSS</strong></div>
       <p>AROMA LABと同じ酒類分類を使用。CROSS-DRINKでは、複数の酒類に現れる同じ分子だけを出題します。</p>
     </section>
   </main>
@@ -103,8 +106,8 @@
     </section>
   </div>
 
-  <script src="./data.js"></script>
-  <script src="./taxonomy.js?v=20260910c"></script>
-  <script src="./app.js?v=20260910c"></script>
+  <script src="./data.js?v=20260910d"></script>
+  <script src="./taxonomy.js?v=20260910d"></script>
+  <script src="./app.js?v=20260910d"></script>
 </body>
 </html>
