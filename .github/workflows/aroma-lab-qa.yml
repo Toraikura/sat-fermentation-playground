@@ -5,6 +5,7 @@ on:
     branches:
       - aroma-lab-structure-audit
       - aroma-lab-aroma-match
+      - aroma-lab-mobile-card-grid
     paths:
       - 'aroma-lab/**'
       - '.github/workflows/aroma-lab-qa.yml'
