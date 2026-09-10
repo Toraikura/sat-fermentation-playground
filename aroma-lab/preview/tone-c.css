@@ -265,7 +265,7 @@ body{
 /*
   WebKit can render the rounded, shadowed 3D clone from its reverse side in this C palette,
   mirroring both text and molecular graphics. The tap/open interaction is unchanged; only C's
-  mobile reveal presentation uses a 2D face transition so the specimen sheet stays readable.
+  mobile reveal presentation uses a 2D face switch so the specimen sheet stays readable.
 */
 @media(max-width:600px){
   body[data-tone="c"] .mobile-expanded-card .card-inner{
@@ -284,7 +284,9 @@ body{
   }
   body[data-tone="c"] .mobile-expanded-card .front{
     display:flex!important;
+    visibility:visible!important;
     opacity:1!important;
+    z-index:2!important;
     transform:none!important;
     -webkit-transform:none!important;
     transition:opacity .18s ease!important;
@@ -292,17 +294,25 @@ body{
   }
   body[data-tone="c"] .mobile-expanded-card .back-face{
     display:flex!important;
+    visibility:hidden!important;
     opacity:0!important;
-    transform:translateY(8px)!important;
-    -webkit-transform:translateY(8px)!important;
-    transition:opacity .24s ease,transform .24s ease!important;
+    z-index:1!important;
+    transform:none!important;
+    -webkit-transform:none!important;
+    transition:opacity .24s ease!important;
     pointer-events:none!important;
   }
   body[data-tone="c"] .mobile-expanded-card.is-flipped .front{
+    display:none!important;
+    visibility:hidden!important;
     opacity:0!important;
+    z-index:0!important;
   }
   body[data-tone="c"] .mobile-expanded-card.is-flipped .back-face{
+    display:flex!important;
+    visibility:visible!important;
     opacity:1!important;
+    z-index:3!important;
     transform:none!important;
     -webkit-transform:none!important;
     pointer-events:auto!important;
