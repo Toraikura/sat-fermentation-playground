@@ -251,7 +251,8 @@ body{
   border-radius:999px!important;
   box-shadow:2px 2px 0 var(--c-orange)!important;
 }
-.mobile-expanded-card .face{border-radius:12px!important;box-shadow:3px 4px 0 rgba(23,21,28,.14)!important}
+/* Keep the C tactility on list cards, but use the proven flat face geometry inside WebKit's 3D modal so the back face never renders mirrored. */
+.mobile-expanded-card .face{border-radius:4px!important;box-shadow:none!important}
 .mobile-expanded-card .final-structure{border-radius:8px!important}
 
 @media(max-width:760px){
