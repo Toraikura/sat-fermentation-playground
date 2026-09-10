@@ -1,0 +1,39 @@
+/* Keep EASY/HARD visual state strictly synchronized with semantic state, including iOS/WebKit sticky hover. */
+.mode-switch button[aria-pressed="false"]{
+  background:rgba(244,240,232,.06)!important;
+  color:var(--sat-paper)!important;
+  border-color:rgba(244,240,232,.35)!important;
+}
+.mode-switch button[aria-pressed="false"]>span,
+.mode-switch button[aria-pressed="false"]>small{color:#aaa1b1!important}
+.mode-switch button[aria-pressed="false"]>strong{color:var(--sat-paper)!important}
+
+.mode-switch button[aria-pressed="true"]{
+  background:var(--sat-lilac)!important;
+  color:var(--sat-ink)!important;
+  border-color:var(--sat-lilac)!important;
+  transform:none!important;
+  box-shadow:none!important;
+}
+.mode-switch button[aria-pressed="true"]>span,
+.mode-switch button[aria-pressed="true"]>strong,
+.mode-switch button[aria-pressed="true"]>small{color:var(--sat-ink)!important}
+
+@media(hover:hover) and (pointer:fine){
+  .mode-switch button[aria-pressed="false"]:hover{background:rgba(197,172,243,.13)!important}
+}
+
+@media(hover:none), (pointer:coarse){
+  .mode-switch button[aria-pressed="false"]:hover,
+  .mode-switch button[aria-pressed="false"]:focus{
+    background:rgba(244,240,232,.06)!important;
+    color:var(--sat-paper)!important;
+    border-color:rgba(244,240,232,.35)!important;
+  }
+  .mode-switch button[aria-pressed="true"]:hover,
+  .mode-switch button[aria-pressed="true"]:focus{
+    background:var(--sat-lilac)!important;
+    color:var(--sat-ink)!important;
+    border-color:var(--sat-lilac)!important;
+  }
+}
