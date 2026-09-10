@@ -17,7 +17,7 @@ add('isoamyl-alcohol','イソアミルアルコール','Isoamyl alcohol','ALCOHO
 add('phenethyl-alcohol','フェネチルアルコール','2-Phenylethanol','ALCOHOL','バラ / 甘い花',['rose'],'2-phenylethanol');
 add('acetaldehyde','アセトアルデヒド','Acetaldehyde','ALDEHYDE','青リンゴ・木・草',['greenapple','grass']);
 add('isovaleraldehyde','イソバレルアルデヒド','3-Methylbutanal','ALDEHYDE','ムレ香 / 刺激的',['steam'],'3-methylbutanal');
-add('4vg','4-ビニルグアイアコール','4-Vinylguaiacol','PHENOL','燻製・香辛料 / クローブ',['smoke','clove'],'4-vinylguaiacol');
+add('4vg','4-ビニルグアイアコール（4VG）','4-Vinylguaiacol','PHENOL','燻製・香辛料 / クローブ',['smoke','clove'],'4-vinylguaiacol');
 add('sotolon','ソトロン','Sotolon','FURANONE','カラメル・熟成の甘さ',['caramel'],'sotolon','清酒標準試薬では「カラメル様」。SDSの実成分を表示。');
 add('ethanethiol','エタンチオール','Ethanethiol','SULFUR','玉ねぎ・ガス / 硫黄',['onion','gas'],'ethanethiol','清酒標準試薬では「メルカプタン」。SDSの実成分を表示。');
 add('dms','ジメチルスルフィド','Dimethyl sulfide','SULFUR','青海苔・コーンスープ',['seaweed','corn'],'dimethyl sulfide');
@@ -41,7 +41,7 @@ add('3mh','3-メルカプトヘキサノール','3-Mercaptohexan-1-ol / 3MH','SU
 add('beta-ionone','β-イオノン','β-Ionone','NORISOPRENOID','スミレ・フローラル',['violet'],'beta-ionone');
 add('tdn','1,1,6-トリメチル-1,2-ジヒドロナフタレン','TDN','AROMATIC','灯油・ペトロール様',['petrol'],'1,1,6-trimethyl-1,2-dihydronaphthalene');
 add('4vp','4-ビニルフェノール','4-Vinylphenol / 4VP','PHENOL','薬品・フェノール様',['medicine'],'4-vinylphenol');
-add('4eg','4-エチルグアヤコール','4-Ethylguaiacol / 4EG','PHENOL','スモーキー・スパイス',['smoke','clove'],'4-ethylguaiacol');
+add('4eg','4-エチルグアイアコール','4-Ethylguaiacol / 4EG','PHENOL','スモーキー・スパイス',['smoke','clove'],'4-ethylguaiacol');
 add('2ap','2-アセチル-1-ピロリン','2-Acetyl-1-pyrroline','HETEROCYCLE','ポップコーン・炒った穀物',['popcorn','rice'],'2-acetyl-1-pyrroline');
 add('so2','二酸化硫黄','Sulfur dioxide','SULFUR OXIDE','刺激的な硫黄・マッチ様',['match'],'sulfur dioxide');
 add('eugenol','オイゲノール','Eugenol','PHENOL','クローブ・スパイス',['clove'],'eugenol');
@@ -54,7 +54,7 @@ add('4ep','4-エチルフェノール','4-Ethylphenol / 4EP','PHENOL','動物・
 add('athp','2-アセチル-3,4,5,6-テトラヒドロピリジン','ATHP','HETEROCYCLE','ネズミ臭・穀物様',['mouse','rice'],'2-acetyl-3,4,5,6-tetrahydropyridine');
 add('geosmin','ジオスミン','Geosmin','TERPENOID','土・雨上がり',['earth','rain'],'geosmin');
 add('styrene','スチレン','Styrene','AROMATIC','プラスチック・樹脂様',['plastic','resin'],'styrene');
-add('guaiacol','グアヤコール','Guaiacol','PHENOL','煙・フェノール',['smoke','medicine'],'guaiacol');
+add('guaiacol','グアイアコール','Guaiacol','PHENOL','煙・フェノール',['smoke','medicine'],'guaiacol');
 add('tca236','2,3,6-トリクロロアニソール','2,3,6-Trichloroanisole','HALOAROMATIC','カビ・湿った紙様',['mold','damppaper'],'2,3,6-trichloroanisole');
 add('3mbt','3-メチル-2-ブテン-1-チオール','3-Methyl-2-buten-1-thiol','SULFUR','日光臭・スカンキー',['skunk'],'3-methyl-2-buten-1-thiol');
 add('trans2nonenal','trans-2-ノネナール','trans-2-Nonenal','ALDEHYDE','段ボール・紙・老化臭',['cardboard'],'trans-2-nonenal');
@@ -73,7 +73,7 @@ function structureUrl(c){return './assets/structures/'+encodeURIComponent(c.id)+
 function categories(c){return [...new Set(c.apps.map(a=>a.drink))]}
 function officialNo(c){const a=c.apps.find(a=>a.drink===state.drink&&(state.drink!=='wine'||state.wine==='all'||a.set===state.wine));return a?String(a.no).padStart(2,'0'):'--'}
 function getVisible(){let arr;if(state.drink==='cross'){arr=crossMolecules.slice().sort((a,b)=>categories(b).length-categories(a).length||a.ja.localeCompare(b.ja,'ja'))}else{arr=C.filter(c=>c.apps.some(a=>a.drink===state.drink&&(state.drink!=='wine'||state.wine==='all'||a.set===state.wine)))}if(state.family)arr=arr.filter(c=>c.family===state.family);return arr}
-function renderTabs(){const defs=[['sake','SAKE','日本酒','19'],['shochu','SHOCHU','焼酎・泡盛','20'],['wine','WINE','ワイン','18 + 20'],['beer','BEER','ビール','17'],['cross','CROSS-DRINK','酒をまたぐ',String(crossMolecules.length)]];tabsEl.innerHTML=defs.map(([id,en,ja,n])=>`<button class="tab ${id==='cross'?'cross-tab':''} ${state.drink===id?'active':''}" data-tab="${id}">${en}<small>${ja} · ${n}</small></button>`).join('');tabsEl.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.drink=b.dataset.tab;state.family=null;render()})}
+function renderTabs(){const defs=[['sake','SAKE','日本酒（オフフレーバー）','19'],['shochu','SHOCHU','焼酎・泡盛','20'],['wine','WINE','ワイン','18 + 20'],['beer','BEER','ビール','17'],['cross','CROSS-DRINK','酒をまたぐ',String(crossMolecules.length)]];tabsEl.innerHTML=defs.map(([id,en,ja,n])=>`<button class="tab ${id==='cross'?'cross-tab':''} ${state.drink===id?'active':''}" data-tab="${id}">${en}<small>${ja} · ${n}</small></button>`).join('');tabsEl.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{state.drink=b.dataset.tab;state.family=null;render()})}
 function escapeHtml(s){return String(s).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]))}
 function iconHtml(name){const label=ICON_LABEL[name]||name.toUpperCase();return `<div class="pico-item"><svg class="pico" viewBox="0 0 100 100" aria-hidden="true"><use href="./pictograms.svg#p-${escapeHtml(name)}"></use></svg><div class="pico-caption">${escapeHtml(label)}</div></div>`}
 function drinkIcon(d){const icon=DRINKS[d].icon;return `<svg viewBox="0 0 100 100" aria-hidden="true"><use href="./pictograms.svg#p-${icon}"></use></svg><span>${DRINKS[d].label}</span>`}
