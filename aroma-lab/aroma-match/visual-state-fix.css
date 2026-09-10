@@ -1,4 +1,7 @@
 /* Keep EASY/HARD visual state strictly synchronized with semantic state, including iOS/WebKit sticky hover. */
+.mode-switch button{
+  transition:transform .12s ease!important;
+}
 .mode-switch button[aria-pressed="false"]{
   background:rgba(244,240,232,.06)!important;
   color:var(--sat-paper)!important;
