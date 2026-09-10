@@ -189,13 +189,20 @@ async function testIPhone(key) {
   const modalCard = page.locator('#mobileCardModal .mobile-expanded-card');
   await assertExpandedContent(modalCard, label);
   const geometry = await page.evaluate(() => {
-    const dialog = document.querySelector('#mobileCardModal .mobile-card-dialog')?.getBoundingClientRect();
-    const expanded = document.querySelector('#mobileCardModal .mobile-expanded-card')?.getBoundingClientRect();
-    return { dialog, expanded, viewport:window.innerWidth };
+    const rect = element => {
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { left:box.left, right:box.right, top:box.top, bottom:box.bottom, width:box.width, height:box.height };
+    };
+    return {
+      dialog:rect(document.querySelector('#mobileCardModal .mobile-card-dialog')),
+      expanded:rect(document.querySelector('#mobileCardModal .mobile-expanded-card')),
+      viewport:window.innerWidth
+    };
   });
   assert(geometry.dialog && geometry.expanded, `${label}: mobile expanded geometry missing`);
-  assert(geometry.dialog.left >= -1 && geometry.dialog.right <= geometry.viewport + 1, `${label}: dialog escapes viewport`);
-  assert(geometry.expanded.left >= -1 && geometry.expanded.right <= geometry.viewport + 1, `${label}: expanded card escapes viewport`);
+  assert(geometry.dialog.left >= -1 && geometry.dialog.right <= geometry.viewport + 1, `${label}: dialog escapes viewport ${JSON.stringify(geometry)}`);
+  assert(geometry.expanded.left >= -1 && geometry.expanded.right <= geometry.viewport + 1, `${label}: expanded card escapes viewport ${JSON.stringify(geometry)}`);
   await page.screenshot({ path:`qa-artifacts/tone-${key}-iphone-expanded-4vg.png`, fullPage:false });
 
   await page.locator('.mobile-card-close').tap();
