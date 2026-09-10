@@ -6,6 +6,7 @@ on:
       - aroma-lab-structure-audit
       - aroma-lab-aroma-match
       - aroma-lab-mobile-card-grid
+      - aroma-lab-visual-direction
     paths:
       - 'aroma-lab/**'
       - '.github/workflows/aroma-lab-qa.yml'
