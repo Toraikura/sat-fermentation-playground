@@ -191,6 +191,9 @@ async function testIPhone() {
   const hint = await page.locator('.instructions .mobile-only').textContent();
   assert.equal(hint.trim(), 'TAP = OPEN / FLIP', 'mobile instruction should describe expanded flip behavior');
 
+  await cards.nth(0).scrollIntoViewIfNeeded();
+  await page.screenshot({ path:'qa-artifacts/aroma-lab-iphone-compact-list.png', fullPage:false });
+
   const card = page.locator('#compound-4vg');
   await card.tap();
   await page.waitForFunction(() => {
@@ -216,17 +219,23 @@ async function testIPhone() {
     const moleculeCopy = element.querySelector('.molecule-copy');
     return {
       innerTransform:getComputedStyle(inner).transform,
+      frontTransform:getComputedStyle(front).transform,
+      backTransform:getComputedStyle(back).transform,
+      frontBackface:getComputedStyle(front).backfaceVisibility,
+      backBackface:getComputedStyle(back).backfaceVisibility,
       frontDisplay:getComputedStyle(front).display,
       backDisplay:getComputedStyle(back).display,
-      backTransform:getComputedStyle(back).transform,
       aromaCopyDisplay:getComputedStyle(aromaCopy).display,
       moleculeCopyDisplay:getComputedStyle(moleculeCopy).display
     };
   });
-  assert.notEqual(flipState.innerTransform, 'none', 'expanded mobile card must use a 3D flip transform');
+  assert.equal(flipState.innerTransform, 'none', 'expanded mobile inner should stay fixed while faces rotate independently');
+  assert.notEqual(flipState.frontTransform, 'none', 'expanded mobile front face must rotate away');
+  assert.notEqual(flipState.backTransform, 'none', 'expanded mobile back face must rotate into view');
+  assert.equal(flipState.frontBackface, 'hidden', 'expanded front backface must be hidden');
+  assert.equal(flipState.backBackface, 'hidden', 'expanded back backface must be hidden');
   assert.notEqual(flipState.frontDisplay, 'none', 'expanded card front face must remain in the 3D stack');
   assert.notEqual(flipState.backDisplay, 'none', 'expanded card back face must remain in the 3D stack');
-  assert.notEqual(flipState.backTransform, 'none', 'expanded card back face must use rotateY');
   assert.notEqual(flipState.aromaCopyDisplay, 'none', 'expanded aroma copy must be readable');
   assert.notEqual(flipState.moleculeCopyDisplay, 'none', 'expanded molecule copy must be readable');
 
@@ -244,7 +253,7 @@ async function testIPhone() {
 
   finishDiagnostics();
   await browser.close();
-  console.log('PASS iPhone WebKit: landscape compact list, ~3-card density, enlarged 3D flip detail, readable back face, structure decode, and close');
+  console.log('PASS iPhone WebKit: landscape compact list, ~3-card density, independent-face 3D flip detail, readable back face, structure decode, and close');
 }
 
 await testDesktop();
