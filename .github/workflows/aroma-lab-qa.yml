@@ -7,6 +7,7 @@ on:
       - aroma-lab-aroma-match
       - aroma-lab-mobile-card-grid
       - aroma-labo-final-direction
+      - aroma-match-visual-direction
     paths:
       - 'aroma-lab/**'
       - '.github/workflows/aroma-lab-qa.yml'
@@ -44,6 +45,9 @@ jobs:
           fi
           if [ -f aroma-lab/tools/qa_aroma_match.mjs ]; then
             node aroma-lab/tools/qa_aroma_match.mjs
+          fi
+          if [ -f aroma-lab/tools/qa_aroma_match_visual.mjs ]; then
+            node aroma-lab/tools/qa_aroma_match_visual.mjs
           fi
 
       - name: Upload screenshots
