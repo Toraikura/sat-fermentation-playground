@@ -1,0 +1,67 @@
+name: RICE LINEAGE QA
+on:
+  push:
+    branches: [rice-lineage]
+    paths:
+      - 'rice-lineage/**'
+      - '.github/workflows/rice-lineage-qa.yml'
+  pull_request:
+    paths:
+      - 'rice-lineage/**'
+      - '.github/workflows/rice-lineage-qa.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check rice-lineage/data.js
+          node --check rice-lineage/app.js
+      - name: Pedigree integrity
+        run: |
+          node <<'NODE'
+          global.window = {};
+          require('./rice-lineage/data.js');
+          const d = window.RICE_LINEAGE_DATA;
+          if (!d) throw new Error('data not exported');
+          const ids = new Set(d.nodes.map(n => n.id));
+          if (ids.size !== d.nodes.length) throw new Error('duplicate node id');
+          const featured = d.nodes.filter(n => n.featured).length;
+          if (featured !== 24) throw new Error(`expected 24 featured nodes, got ${featured}`);
+          const required = ['yamada-nishiki','yamada-ho','tankan-wataribune','gohyakumangoku','miyama-nishiki','omachi','aiyama','kikusui','hattan-nishiki-1','koshi-tanrei','goriki','gin-no-sato','saga-no-hana','jugemu','hana-nishiki'];
+          for (const id of required) if (!ids.has(id)) throw new Error(`missing required node: ${id}`);
+          for (const e of d.events) {
+            if (!ids.has(e.child)) throw new Error(`missing child: ${e.child}`);
+            for (const p of e.parents) if (!ids.has(p)) throw new Error(`missing parent: ${p}`);
+            if (!e.sources?.length) throw new Error(`event without source: ${e.id}`);
+            for (const s of e.sources) if (!d.sources[s]) throw new Error(`missing source ${s} on ${e.id}`);
+          }
+          const next = new Map(d.nodes.map(n => [n.id, []]));
+          for (const e of d.events) for (const p of e.parents) next.get(p).push(e.child);
+          const visiting = new Set(), done = new Set();
+          function dfs(id) {
+            if (visiting.has(id)) throw new Error(`cycle detected at ${id}`);
+            if (done.has(id)) return;
+            visiting.add(id);
+            for (const c of next.get(id)) dfs(c);
+            visiting.delete(id); done.add(id);
+          }
+          for (const id of ids) dfs(id);
+          const aiyama = d.events.find(e => e.child === 'aiyama');
+          if (!aiyama || aiyama.parents.includes('yamada-nishiki')) throw new Error('Aiyama must not be a direct child of Yamada Nishiki');
+          const miyama = d.events.find(e => e.child === 'miyama-nishiki');
+          if (miyama?.type !== 'MUTATION') throw new Error('Miyama Nishiki must be MUTATION');
+          console.log(`OK nodes=${d.nodes.length} featured=${featured} events=${d.events.length} sources=${Object.keys(d.sources).length} DAG=valid`);
+          NODE
+      - name: Page contract
+        run: |
+          grep -q 'RICE LINEAGE' rice-lineage/index.html
+          grep -q 'id="lineageSvg"' rice-lineage/index.html
+          grep -q 'id="mobileParents"' rice-lineage/index.html
+          grep -q 'id="fullMapModal"' rice-lineage/index.html
