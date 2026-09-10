@@ -39,6 +39,9 @@ jobs:
           trap 'kill $SERVER_PID || true' EXIT
           sleep 2
           node aroma-lab/tools/qa_browser.mjs
+          if [ -f aroma-lab/tools/qa_visual_direction.mjs ]; then
+            node aroma-lab/tools/qa_visual_direction.mjs
+          fi
           if [ -f aroma-lab/tools/qa_aroma_match.mjs ]; then
             node aroma-lab/tools/qa_aroma_match.mjs
           fi
