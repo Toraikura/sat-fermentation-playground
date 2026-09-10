@@ -68,6 +68,83 @@ async function assertAromaImagesDecoded(page, label) {
   }
 }
 
+async function assertAromaImageGeometry(page, label) {
+  const geometry = await page.locator('#aromaColumn .aroma-card').evaluateAll(cards => cards.map(card => {
+    const cardRect = card.getBoundingClientRect();
+    const thumb = card.querySelector('.aroma-thumb');
+    const thumbRect = thumb?.getBoundingClientRect();
+    const images = [...card.querySelectorAll('img')].map(img => {
+      const rect = img.getBoundingClientRect();
+      const style = getComputedStyle(img);
+      return {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        objectFit: style.objectFit,
+        objectPosition: style.objectPosition
+      };
+    });
+    return {
+      card: { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom },
+      thumb: thumbRect ? { left: thumbRect.left, top: thumbRect.top, right: thumbRect.right, bottom: thumbRect.bottom } : null,
+      images
+    };
+  }));
+
+  assert.equal(geometry.length, 6, `${label}: expected six aroma cards`);
+  for (const entry of geometry) {
+    assert(entry.thumb, `${label}: aroma thumb missing`);
+    for (const image of entry.images) {
+      assert(image.left >= entry.thumb.left - 1.5, `${label}: image escapes thumb on left`);
+      assert(image.right <= entry.thumb.right + 1.5, `${label}: image escapes thumb on right`);
+      assert(image.top >= entry.thumb.top - 1.5, `${label}: image escapes thumb on top`);
+      assert(image.bottom <= entry.thumb.bottom + 1.5, `${label}: image escapes thumb on bottom`);
+      assert(image.naturalWidth > 0 && image.naturalHeight > 0, `${label}: image has invalid intrinsic dimensions`);
+    }
+  }
+}
+
+async function captureAromaGallery(page, path) {
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    const data = window.AROMA_MATCH_DATA;
+    const aromaById = new Map(data.aromas.map(aroma => [aroma.id, aroma]));
+    const cards = data.compounds.map(compound => {
+      const images = compound.aromaIds.slice(0, 2).map(aromaId => aromaById.get(aromaId)).filter(Boolean);
+      const imageHtml = images.map(aroma => `<img src="${aroma.image}" alt="${aroma.label}">`).join('');
+      return `<article class="qa-gallery-item">
+        <div class="qa-gallery-meta"><b>${compound.id}</b><span>${compound.ja}</span></div>
+        <div class="match-card aroma-card qa-gallery-card">
+          <span class="aroma-thumb ${images.length > 1 ? 'multi' : ''}">${imageHtml}</span>
+          <span class="aroma-copy"><strong>${compound.aroma}</strong><small>${compound.family}</small></span>
+        </div>
+      </article>`;
+    }).join('');
+
+    document.body.innerHTML = `<main class="qa-gallery"><h1>AROMA MATCH / ALL 51 CARD VISUAL QA</h1><p>Same image rules as the game cards.</p><section>${cards}</section></main>`;
+    const style = document.createElement('style');
+    style.textContent = `
+      body{padding:24px;background:#f3efe3}
+      .qa-gallery{max-width:1200px;margin:0 auto}
+      .qa-gallery h1{font:900 26px ui-monospace,monospace;margin:0}
+      .qa-gallery>p{font:700 12px ui-monospace,monospace;margin:4px 0 20px}
+      .qa-gallery section{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+      .qa-gallery-item{min-width:0}
+      .qa-gallery-meta{display:flex;justify-content:space-between;gap:8px;margin:0 2px 5px;font-size:10px}
+      .qa-gallery-meta b{font-family:ui-monospace,monospace}
+      .qa-gallery-card{height:88px}
+    `;
+    document.head.appendChild(style);
+  });
+  await page.waitForFunction(() => [...document.images].every(img => img.complete && img.naturalWidth > 0), { timeout: 10000 });
+  await page.screenshot({ path, fullPage: true });
+}
+
 async function makeOneWrongMatch(page, useTap) {
   const left = page.locator('#compoundColumn .compound-card').first();
   const leftId = await left.getAttribute('data-compound-id');
@@ -143,14 +220,17 @@ async function testChromium() {
   await assertFirstRoundExamples(page, 'chromium');
   await assertBeginnerUniqueness(page, 'chromium');
   await assertAromaImagesDecoded(page, 'chromium');
+  await assertAromaImageGeometry(page, 'chromium');
+  await page.screenshot({ path: 'qa-artifacts/aroma-match-chromium-initial.png', fullPage: true });
   await makeOneWrongMatch(page, false);
   await solveRound(page, false);
   await page.screenshot({ path: 'qa-artifacts/aroma-match-chromium-clear.png', fullPage: true });
   await assertReplay(page, false);
 
   finishDiagnostics();
+  await captureAromaGallery(page, 'qa-artifacts/aroma-match-all-51-cards.png');
   await browser.close();
-  console.log('PASS AROMA MATCH Chromium: unique 6-pair round, wrong feedback, structure flash, locked connections, score, and replay');
+  console.log('PASS AROMA MATCH Chromium: unique 6-pair round, aroma image geometry, visual gallery, wrong feedback, structure flash, locked connections, score, and replay');
 }
 
 async function testIPhoneWebKit() {
@@ -164,6 +244,7 @@ async function testIPhoneWebKit() {
   await assertFirstRoundExamples(page, 'iphone-webkit');
   await assertBeginnerUniqueness(page, 'iphone-webkit');
   await assertAromaImagesDecoded(page, 'iphone-webkit');
+  await assertAromaImageGeometry(page, 'iphone-webkit');
 
   const viewport = await page.evaluate(() => ({ innerWidth, scrollWidth: document.documentElement.scrollWidth }));
   assert(viewport.scrollWidth <= viewport.innerWidth + 1, `iPhone horizontal overflow: ${viewport.scrollWidth} > ${viewport.innerWidth}`);
@@ -175,6 +256,7 @@ async function testIPhoneWebKit() {
   assert(left.x < right.x, 'iPhone columns must stay left/right');
   assert(right.x < board.x + board.width, 'iPhone right column must fit in board');
 
+  await page.screenshot({ path: 'qa-artifacts/aroma-match-iphone-webkit-initial.png', fullPage: true });
   await makeOneWrongMatch(page, true);
   await solveRound(page, true);
   await page.screenshot({ path: 'qa-artifacts/aroma-match-iphone-webkit-clear.png', fullPage: true });
@@ -182,7 +264,7 @@ async function testIPhoneWebKit() {
 
   finishDiagnostics();
   await browser.close();
-  console.log('PASS AROMA MATCH iPhone 13 WebKit: portrait two-column touch UX, no horizontal overflow, full round, and replay');
+  console.log('PASS AROMA MATCH iPhone 13 WebKit: portrait two-column touch UX, aroma image geometry, no horizontal overflow, full round, and replay');
 }
 
 await testChromium();
