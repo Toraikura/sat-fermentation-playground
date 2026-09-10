@@ -63,6 +63,46 @@
     'aroma-yogurt':'ヨーグルト'
   };
 
+  const FILTERS = [
+    {id:'all', label:'ALL', ja:'全て'},
+    {id:'sake', label:'SAKE', ja:'日本酒'},
+    {id:'beer', label:'BEER', ja:'ビール'},
+    {id:'wine', label:'WINE', ja:'ワイン'},
+    {id:'shochu', label:'SHOCHU', ja:'焼酎'}
+  ];
+
+  // Educational relevance pools, not exclusive presence/absence claims.
+  // A compound may belong to multiple drink categories.
+  const DRINK_MEMBERSHIP = {
+    sake: [
+      'ethyl-acetate','isoamyl-acetate','ethyl-hexanoate','ethanol','isoamyl-alcohol',
+      'phenethyl-alcohol','acetaldehyde','isovaleraldehyde','4vg','sotolon','ethanethiol',
+      'dms','dmts','diacetyl','hexanoic-acid','acetic-acid','butyric-acid',
+      'isovaleric-acid','beta-damascenone','furfural','ethyl-laurate','h2s','guaiacol'
+    ],
+    beer: [
+      'ethyl-acetate','isoamyl-acetate','ethyl-hexanoate','ethanol','isoamyl-alcohol',
+      'phenethyl-alcohol','acetaldehyde','4vg','ethanethiol','dms','diacetyl','hexanoic-acid',
+      'acetic-acid','isovaleric-acid','linalool','beta-damascenone','vanillin','furfural',
+      '4vp','eugenol','geraniol','h2s','guaiacol','3mbt','trans2nonenal'
+    ],
+    wine: [
+      'ethyl-acetate','isoamyl-acetate','ethyl-hexanoate','ethanol','isoamyl-alcohol',
+      'phenethyl-alcohol','acetaldehyde','4vg','sotolon','ethanethiol','dms','tca246',
+      'diacetyl','hexanoic-acid','acetic-acid','butyric-acid','isovaleric-acid','linalool',
+      'beta-damascenone','vanillin','furfural','octenol','ibmp','3mh','beta-ionone','tdn',
+      '4vp','so2','eugenol','hexadienol','cis3hexenol','geraniol','h2s','4ep','athp',
+      'geosmin','guaiacol','tca236','citronellol','dcp26'
+    ],
+    shochu: [
+      'ethyl-acetate','isoamyl-acetate','ethyl-hexanoate','ethanol','isoamyl-alcohol',
+      'phenethyl-alcohol','acetaldehyde','isovaleraldehyde','4vg','ethanethiol','dms','dmts',
+      'diacetyl','hexanoic-acid','acetic-acid','butyric-acid','isovaleric-acid','linalool',
+      'beta-damascenone','vanillin','furfural','ethyl-laurate','3mh','beta-ionone','geraniol',
+      'h2s','guaiacol','citronellol'
+    ]
+  };
+
   // Source: the 51 compound rows in ../app.js plus the final image mapping in
   // ../hotfix-name-first.js. aromaIds are normalized concepts so a later EXPERT
   // mode can match one aroma concept to multiple compounds without changing schema.
@@ -120,8 +160,20 @@
     ['dcp26','2,6-ジクロロフェノール','2,6-Dichlorophenol','HALOPHENOL','薬品・消毒様',['aroma-phenol']]
   ];
 
+  const categorySets = Object.fromEntries(
+    Object.entries(DRINK_MEMBERSHIP).map(([category, ids]) => [category, new Set(ids)])
+  );
+
   const compounds = ROWS.map(([id,ja,en,family,aroma,aromaIds]) => ({
-    id, ja, en, family, aroma, aromaIds: aromaIds.slice(),
+    id,
+    ja,
+    en,
+    family,
+    aroma,
+    aromaIds: aromaIds.slice(),
+    categories: FILTERS
+      .filter(filter => filter.id !== 'all' && categorySets[filter.id].has(id))
+      .map(filter => filter.id),
     structure: `../assets/structures/${id}.svg`
   }));
 
@@ -138,7 +190,8 @@
   })));
 
   window.AROMA_MATCH_DATA = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    filters: FILTERS,
     compounds,
     aromas,
     links
