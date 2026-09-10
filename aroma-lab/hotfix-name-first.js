@@ -74,6 +74,22 @@
     return `<img class="final-aroma-img" loading="lazy" decoding="async" width="320" height="320" src="${IMAGE_BASE}${slug}.png" alt="${esc(label)}">`;
   }
 
+  function deferredAromaImage(slug, label) {
+    return `<img class="final-aroma-img" loading="lazy" decoding="async" width="320" height="320" data-aroma-src="${IMAGE_BASE}${slug}.png" alt="${esc(label)}">`;
+  }
+
+  function loadDeferredAromaImages(root) {
+    root.querySelectorAll('img[data-aroma-src]').forEach(image => {
+      const src = image.dataset.aromaSrc;
+      if (!src) return;
+      image.loading = 'eager';
+      image.decoding = 'async';
+      image.setAttribute('fetchpriority', 'high');
+      image.src = src;
+      delete image.dataset.aromaSrc;
+    });
+  }
+
   function applicationLabel(application) {
     const no = String(application.no).padStart(2, '0');
     if (application.drink !== 'wine') return no;
@@ -96,6 +112,7 @@
   function bindHoverState(card) {
     card.addEventListener('pointerenter', () => {
       if (!FINE_POINTER.matches || card.classList.contains('pinned') || card.dataset.hoverSuppressed === '1') return;
+      loadDeferredAromaImages(card);
       card.classList.add('hover-revealed');
     });
 
@@ -119,6 +136,7 @@
           const target = document.getElementById(`compound-${id}`);
           if (!target) return;
           clearTransientHover(target);
+          loadDeferredAromaImages(target);
           target.scrollIntoView({behavior:'smooth', block:'center'});
           target.classList.add('revealed','pinned');
           target.setAttribute('aria-expanded','true');
@@ -144,6 +162,7 @@
     bindHoverState(card);
 
     card.addEventListener('click', () => {
+      loadDeferredAromaImages(card);
       requestAnimationFrame(() => {
         const revealed = card.classList.contains('revealed');
         card.setAttribute('aria-expanded', String(revealed));
@@ -186,7 +205,7 @@
     back.innerHTML = `
       <div class="reveal-head"><span>${index} / REVEAL</span><span>AROMA → MOLECULE → DRINKS</span></div>
       <div class="reveal-body">
-        <section class="reveal-stage aroma-stage"><div class="stage-label">01 / AROMA</div><div class="aroma-stage-images">${assets.slice(0,2).map(slug => aromaImage(slug, compound.aroma)).join('')}</div><div class="aroma-stage-copy"><strong>${esc(compound.aroma)}</strong></div></section>
+        <section class="reveal-stage aroma-stage"><div class="stage-label">01 / AROMA</div><div class="aroma-stage-images">${assets.slice(0,2).map(slug => deferredAromaImage(slug, compound.aroma)).join('')}</div><div class="aroma-stage-copy"><strong>${esc(compound.aroma)}</strong></div></section>
         <section class="reveal-stage molecule-stage"><div class="stage-label">02 / MOLECULE</div><div class="structure-wrap final-structure"><img loading="lazy" decoding="async" alt="${esc(compound.ja)}の構造式" src="${structureUrl(compound)}"><span class="structure-fallback">2D STRUCTURE<br>NOT LOADED</span></div><div class="molecule-copy"><strong>${esc(compound.ja)}</strong><span>${esc(compound.en)}</span><em>${esc(compound.family)}</em>${compound.note ? `<small>${esc(compound.note)}</small>` : ''}</div></section>
         <section class="reveal-stage drinks-stage"><div class="stage-label">03 / ACROSS DRINKS</div>${drinkRail(compound)}<button class="related" data-family="${esc(compound.family)}">SIMILAR SHAPES / ${esc(compound.family)} ↗</button></section>
       </div>`;
