@@ -1,0 +1,67 @@
+/* AROMA LAB 04 production hotfix: compact hero specimen + permanent chemistry hints */
+
+/* Keep the hero specimen intentionally tilted while reducing its visual weight. */
+.name-first-specimen{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  justify-self:center!important;
+  width:min(100%,460px)!important;
+  min-height:230px!important;
+  padding:48px 30px 36px!important;
+  transform:rotate(1.5deg)!important;
+}
+
+/* Chemistry hints are part of the default reading experience now. */
+#hintToggle{display:none!important}
+.name-front-foot>span:first-child,
+.family-chip{
+  opacity:1!important;
+  transform:none!important;
+}
+
+@media(max-width:1050px){
+  .name-first-specimen{
+    width:min(100%,410px)!important;
+    min-height:205px!important;
+    padding:45px 27px 34px!important;
+  }
+}
+
+@media(max-width:760px){
+  .name-first-specimen{
+    width:min(78vw,340px)!important;
+    min-height:160px!important;
+    padding:44px 22px 32px!important;
+    margin-inline:auto!important;
+    transform:rotate(1.5deg)!important;
+  }
+  .name-first-specimen::before{top:14px!important;left:16px!important}
+  .name-first-specimen::after{bottom:12px!important;right:16px!important;font-size:8px!important}
+  .name-first-specimen .hero-note{right:-6px!important;top:-16px!important}
+  .hero-name{gap:7px!important}
+  .hero-name small{font-size:8px!important}
+  .hero-name strong{font-size:clamp(25px,7vw,34px)!important}
+  .hero-name span{font-size:9px!important}
+}
+
+@media(max-width:430px){
+  .name-first-specimen{
+    width:min(78vw,330px)!important;
+    min-height:154px!important;
+    padding:42px 18px 30px!important;
+    transform:rotate(1.5deg)!important;
+  }
+  .name-first-specimen::before{top:13px!important;left:15px!important;font-size:8px!important}
+  .name-first-specimen::after{bottom:10px!important;right:14px!important;font-size:7px!important}
+  .name-first-specimen .hero-note{
+    right:-5px!important;
+    top:-15px!important;
+    padding:8px 11px!important;
+    font-size:9px!important;
+    transform:rotate(4deg)!important;
+  }
+  .hero-name small{font-size:7.5px!important}
+  .hero-name strong{font-size:clamp(24px,7.3vw,31px)!important}
+  .hero-name span{font-size:8.5px!important}
+}
