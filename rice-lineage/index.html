@@ -15,6 +15,22 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg">
 <link rel="stylesheet" href="./styles.css?v=20260911-arcade1">
+<style>
+/* 2026-09-11 mobile UX hotfix: put the game action before the map and keep CLEAR CTA reachable. */
+.quick-start-hint{margin:18px 0 7px;font:900 9px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.12em;color:#1f513f}
+.quick-start-dock{margin:0 0 22px}
+.quick-start-dock .engine-btn{min-height:64px;font-size:13px}
+@media(max-width:720px){
+  .board-wrap{padding-top:20px}
+  .quick-start-hint{margin-top:16px;font-size:8px}
+  .quick-start-dock{margin-bottom:18px;box-shadow:4px 4px 0 #c79a2d}
+  .quick-start-dock .engine-btn{height:58px;font-size:13px}
+  .paper-board{margin-top:0}
+  .clear-screen{min-height:calc(100dvh - 54px);overflow:visible}
+  .clear-stage{height:auto!important;min-height:calc(100dvh - 54px);max-height:none;overflow:visible;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .clear-stage .next-btn{margin-bottom:calc(18px + env(safe-area-inset-bottom))}
+}
+</style>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"RICE LINEAGE｜酒米の系譜","applicationCategory":"GameApplication","operatingSystem":"Web","description":"酒米の親子関係・交配・選抜の系譜を、家系図ボードとドライブゲームでたどるInteractive Experience。","url":"https://toraikura.github.io/sat-fermentation-playground/rice-lineage/","isPartOf":{"@type":"WebSite","name":"FERMENTATION PLAYGROUND","url":"https://toraikura.github.io/sat-fermentation-playground/"}}</script>
 </head>
 <body>
@@ -42,6 +58,18 @@
           <div class="progress-stamp" aria-live="polite"><small>LINEAGE</small><strong id="boardProgress">0 / 5</strong><span>CONNECTED</span></div>
         </div>
 
+        <p class="quick-start-hint">PLAY FIRST / まずはここから</p>
+        <aside class="mission-dock quick-start-dock" id="missionDock" aria-live="polite">
+          <div class="mission-number"><small>SELECTED</small><strong id="dockNumber">01</strong></div>
+          <div class="mission-copy">
+            <span id="dockStatus" class="status-pill">READY</span>
+            <h2 id="dockTitle">山田錦</h2>
+            <p id="dockSummary">山田錦の親と、その先のルーツを探しに行く。</p>
+            <small id="dockMeta">3 CHECKPOINTS / HYOGO</small>
+          </div>
+          <button class="engine-btn" id="startMission" type="button"><span>START ENGINE</span><b>→</b></button>
+        </aside>
+
         <div class="paper-board" id="paperBoard">
           <div class="paper-board-top">
             <div><small>THE BOARD</small><strong>SAKE RICE FAMILY MAP</strong></div>
@@ -53,17 +81,6 @@
           </div>
           <p class="map-caption">タップできる大きな丸がミッション。クリアすると、その系譜の線が色づきます。</p>
         </div>
-
-        <aside class="mission-dock" id="missionDock" aria-live="polite">
-          <div class="mission-number"><small>SELECTED</small><strong id="dockNumber">01</strong></div>
-          <div class="mission-copy">
-            <span id="dockStatus" class="status-pill">READY</span>
-            <h2 id="dockTitle">山田錦</h2>
-            <p id="dockSummary">山田錦の親と、その先のルーツを探しに行く。</p>
-            <small id="dockMeta">3 CHECKPOINTS / HYOGO</small>
-          </div>
-          <button class="engine-btn" id="startMission" type="button"><span>START ENGINE</span><b>→</b></button>
-        </aside>
 
         <div class="board-bottom">
           <div class="vehicle-card">
