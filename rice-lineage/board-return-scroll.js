@@ -4,14 +4,8 @@
 function scrollToBoardReturnPosition(){
   const target=document.getElementById('missionDock')||document.getElementById('paperBoard');
   if(!target)return;
-
-  const move=()=>{
-    const y=window.scrollY+target.getBoundingClientRect().top-8;
-    window.scrollTo({top:Math.max(0,y),behavior:'auto'});
-  };
-
-  requestAnimationFrame(()=>requestAnimationFrame(move));
-  setTimeout(move,80);
+  target.style.scrollMarginTop='8px';
+  requestAnimationFrame(()=>target.scrollIntoView({block:'start',behavior:'auto'}));
 }
 
 ['backToBoard','quitMission','gameOverBoard'].forEach(id=>{
