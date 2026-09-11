@@ -113,7 +113,15 @@ function renderBoard(){
 function selectMission(id){const m=missions.find(v=>v.id===id);if(!m||!isUnlocked(m))return;selectedMission=m;saveState();renderDock();$$('.map-node.target').forEach(el=>el.classList.toggle('selected',el.dataset.id===m.target))}
 function renderDock(){
   const m=selectedMission,i=missionIndex(m.id),done=state.completed.includes(m.id),unlocked=isUnlocked(m),n=node(m.target);
-  $('#dockNumber').textContent=String(i+1).padStart(2,'0');$('#dockTitle').textContent=n.ja;$('#dockSummary').textContent=m.summary;$('#dockMeta').textContent=`${m.questions.length} CHECKPOINTS / ${m.region}`;$('#dockStatus').textContent=done?'CLEARED':unlocked?'READY':'LOCKED';$('#dockStatus').className=`status-pill ${done?'done':''}`;const btn=$('#startMission');btn.disabled=!unlocked;btn.querySelector('span').textContent=done?'RUN AGAIN':'START ENGINE';
+  $('#dockNumber').textContent=String(i+1).padStart(2,'0');
+  $('#dockTitle').textContent=n.ja;
+  $('#dockSummary').textContent=m.summary;
+  $('#dockMeta').textContent=`${m.questions.length} CHECKPOINTS / ${m.region}`;
+  $('#dockStatus').textContent=done?'CLEARED':unlocked?'READY':'LOCKED';
+  $('#dockStatus').className=`status-pill ${done?'done':''}`;
+  const btn=$('#startMission');
+  btn.disabled=!unlocked;
+  btn.querySelector('span').textContent=unlocked?'START ENGINE':'LOCKED';
   $$('.map-node.target').forEach(el=>el.classList.toggle('selected',el.dataset.id===m.target))
 }
 
