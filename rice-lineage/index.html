@@ -35,8 +35,12 @@
 .map-node.target{border-radius:24px;box-shadow:0 0 0 5px #fff8e8}
 .map-node.support{border-radius:14px;background:#f5efd7}
 .map-caption{font-size:10px}
+.paper-board-top>div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.paper-board-top>div span{font:800 7px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;color:#6a726d;letter-spacing:.08em}.world-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid #102a3f;background:#ece6d6}.world-tab{min-height:58px;border:0;border-right:1px solid #b7ae9c;background:transparent;padding:8px 10px;text-align:left}.world-tab:last-child{border-right:0}.world-tab small{display:block;font:900 6px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.12em;color:#1f513f}.world-tab strong{display:block;margin-top:3px;font:900 10px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}.world-tab span{display:block;margin-top:3px;font-size:7px;color:#697068}.world-tab.active{background:#1f513f;color:#fff;box-shadow:inset 0 -4px 0 #c79a2d}.world-tab.active small,.world-tab.active span{color:#fff}.world-tab:disabled{opacity:.36;cursor:not-allowed}.map-node.target::before{content:"STAGE " attr(data-stage);position:absolute;top:-18px;left:50%;transform:translateX(-50%);white-space:nowrap;font:900 6px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.08em;color:#102a3f;background:#fff7df;border:1px solid #102a3f;padding:2px 5px}.map-node.target.done::before{background:#c79a2d}.route-sign[data-kind="event"]{background:#6644b8!important;box-shadow:0 0 0 4px #2b175f,0 0 18px #ffd34d!important}.route-sign[data-kind="event"] small{color:#fff4b8}.data-grid article span{display:block}
 @media(max-width:720px){
   .board-wrap{padding-top:20px}
+  .world-nav{grid-template-columns:repeat(2,1fr)}
+  .world-tab{min-height:52px;border-bottom:1px solid #b7ae9c}.world-tab:nth-child(2){border-right:0}.world-tab:nth-child(3),.world-tab:nth-child(4){border-bottom:0}.world-tab strong{font-size:9px}.world-tab span{font-size:6px}
+  .paper-board-top>div span{width:100%}
   .quick-start-hint{margin-top:14px;font-size:8px}
   .quick-start-dock{margin-bottom:14px;padding:10px}
   .quick-start-dock .engine-btn{height:62px;padding-right:90px}
@@ -77,7 +81,7 @@
             <h1 id="boardTitle">線をつなげ。<br><span>ルーツを走れ。</span></h1>
             <p class="board-lead">酒米を選ぶと、夜の田んぼへ。正しいルーツを走り切ると、家系図の線が一本ずつ目を覚ます。</p>
           </div>
-          <div class="progress-stamp" aria-live="polite"><small>LINEAGE</small><strong id="boardProgress">0 / 5</strong><span>CONNECTED</span></div>
+          <div class="progress-stamp" aria-live="polite"><small>LINEAGE</small><strong id="boardProgress">0 / 14</strong><span>CONNECTED</span></div>
         </div>
 
         <p class="quick-start-hint">PLAY FIRST / まずはここから</p>
@@ -94,14 +98,15 @@
 
         <div class="paper-board" id="paperBoard">
           <div class="paper-board-top">
-            <div><small>THE BOARD</small><strong>SAKE RICE FAMILY MAP</strong></div>
+            <div><small>THE BOARD / COURSE MAP</small><strong id="worldMapTitle">WORLD 1 / ROOTS</strong><span id="worldMapSub">はじまり</span></div>
             <button type="button" class="reset-link" id="resetProgress">RESET</button>
           </div>
-          <div class="lineage-map" id="lineageMap" aria-label="酒米の家系図ボード">
+          <div class="world-nav" id="worldNav" aria-label="RICE LINEAGE worlds"></div>
+          <div class="lineage-map" id="lineageMap" aria-label="酒米のコースマップ">
             <svg class="map-lines" id="boardLines" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true"></svg>
             <div id="boardNodes"></div>
           </div>
-          <p class="map-caption">下の家系図も、レトロなコースを走る感覚で。大きなノードをタップするとそのルートへ出発します。</p>
+          <p class="map-caption">4つのWORLDを順番に走破。大きなチェックポイントをタップすると、その酒米の系譜ルートへ出発します。</p>
         </div>
 
         <div class="board-bottom">
@@ -165,7 +170,7 @@
 <div class="modal" id="infoModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
     <div class="modal-head"><div><small>RICE LINEAGE</small><h2 id="infoTitle">DATA / SOURCES</h2></div><button id="closeInfo" type="button" aria-label="閉じる">×</button></div>
-    <p class="data-note">ゲームのルートは既存の <code>SOURCE_LEDGER.md</code> で確認済みの交配・選抜関係だけを使っています。交配（CROSS）と選抜（SELECTION）は同じものとして扱いません。</p>
+    <p class="data-note">ゲームのルートは <code>SOURCE_LEDGER.md</code> で確認済みの交配・選抜・突然変異・起点関係だけを使っています。分からない親はゲーム都合で作りません。</p>
     <details open><summary>PLAYABLE MISSIONS</summary><div id="missionIndex" class="data-grid"></div></details>
     <details><summary>PRIMARY SOURCES</summary><div id="sourceList" class="source-list"></div></details>
   </div>
@@ -174,6 +179,7 @@
 <div class="gameover" id="gameOver" hidden><div><small>NO MORE HEARTS</small><strong>GAME OVER</strong><p>もう一度このルートを走る？</p><button id="retryMission" type="button">RETRY</button><button id="gameOverBoard" type="button">BOARD</button></div></div>
 
 <script src="./data.js?v=20260910-1"></script>
-<script src="./app.js?v=20260911-arcade2"></script>
+<script src="./game-data.js?v=20260911-14stage1"></script>
+<script src="./app.js?v=20260911-14stage1"></script>
 </body>
 </html>
