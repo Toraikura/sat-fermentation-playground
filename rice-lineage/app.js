@@ -1,44 +1,164 @@
 (()=>{
 'use strict';
-const D=window.RICE_LINEAGE_DATA;if(!D)return;
-const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const D=window.RICE_LINEAGE_DATA;
+if(!D)return;
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const byId=new Map(D.nodes.map(n=>[n.id,n]));
-const parentEvents=new Map(),childEvents=new Map();
-D.nodes.forEach(n=>{parentEvents.set(n.id,[]);childEvents.set(n.id,[])});
-D.events.forEach(e=>{childEvents.get(e.child)?.push(e);e.parents.forEach(p=>parentEvents.get(p)?.push(e))});
-let selected=new URLSearchParams(location.search).get('rice');if(!byId.has(selected))selected=D.defaultRice;
-let lang=localStorage.getItem('rice-lineage-lang')||'ja';
-const text=(n,k='summary')=>n[k]?.[lang]||n[k]?.ja||'';
-const parentsOf=id=>[...new Set((childEvents.get(id)||[]).flatMap(e=>e.parents))];
-const childrenOf=id=>[...new Set((parentEvents.get(id)||[]).map(e=>e.child))];
-const walk=(id,next)=>{const seen=new Set(),stack=[id];while(stack.length){const x=stack.pop();for(const y of next(x)){if(y!==id&&!seen.has(y)){seen.add(y);stack.push(y)}}}return seen};
-const relatedState=id=>{const p=new Set(parentsOf(selected)),c=new Set(childrenOf(selected));if(id===selected)return'selected';if(p.has(id)||c.has(id))return'direct';const a=walk(selected,parentsOf),d=walk(selected,childrenOf);if(a.has(id)||d.has(id))return'related';return'unrelated'};
-function coContext(){const s=new Set([selected,...parentsOf(selected),...childrenOf(selected)]);D.events.forEach(e=>{if(e.child===selected||e.parents.includes(selected)||childrenOf(selected).includes(e.child)){e.parents.forEach(p=>s.add(p));s.add(e.child)}});return s}
-function setSelected(id,{scroll=false,history=true,close=false}={}){if(!byId.has(id))return;selected=id;if(history){const u=new URL(location.href);u.searchParams.set('rice',id);historyReplace(u)}renderAll();if(scroll)$('#lineage')?.scrollIntoView({behavior:'smooth',block:'start'});if(close)closeFullMap()}
-function historyReplace(u){try{history.replaceState({},'',u)}catch{}}
-function svgEl(tag,attrs={}){const e=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e}
-function curve(x1,y1,x2,y2){const m=(x1+x2)/2;return`M${x1} ${y1} C${m} ${y1},${m} ${y2},${x2} ${y2}`}
-function renderGraph(svg){if(!svg)return;svg.innerHTML='';const vp=svgEl('g',{class:'graph-viewport'});svg.append(vp);const context=coContext(),directParents=new Set(parentsOf(selected)),directChildren=new Set(childrenOf(selected));
-D.events.forEach(e=>{const child=byId.get(e.child),ps=e.parents.map(byId.get).filter(Boolean);if(!child||!ps.length)return;const active=e.child===selected||e.parents.includes(selected)||walk(selected,parentsOf).has(e.child)||walk(selected,childrenOf).has(e.child)||e.parents.some(p=>walk(selected,parentsOf).has(p)||walk(selected,childrenOf).has(p));const direct=e.child===selected||e.parents.includes(selected);const cls=`edge ${e.type==='MUTATION'?'mutation ':''}${direct?'direct':active?'related':''}`;
-if(ps.length>1){const jx=Math.round((Math.max(...ps.map(p=>p.x))+child.x)/2),jy=child.y;ps.forEach(p=>vp.append(svgEl('path',{d:curve(p.x+76,p.y,jx,jy),class:cls,'data-event':e.id})));vp.append(svgEl('circle',{cx:jx,cy:jy,r:5,class:`junction ${direct?'related':active?'related':''}`}));vp.append(svgEl('path',{d:curve(jx,jy,child.x-76,child.y),class:cls,'data-event':e.id}));const label=svgEl('text',{x:jx,y:jy-11,class:'event-label','text-anchor':'middle'});label.textContent=e.type;vp.append(label)}else{const p=ps[0];vp.append(svgEl('path',{d:curve(p.x+76,p.y,child.x-76,child.y),class:cls,'data-event':e.id}));const label=svgEl('text',{x:(p.x+child.x)/2,y:(p.y+child.y)/2-8,class:'event-label','text-anchor':'middle'});label.textContent=e.type;vp.append(label)}});
-D.nodes.forEach(n=>{let state=relatedState(n.id);if(context.has(n.id)&&state==='unrelated')state='related';const support=!n.featured||n.type==='support';const w=support?122:156,h=support?48:62;const g=svgEl('g',{class:`node ${state}${support?' support':''}`,transform:`translate(${n.x-w/2} ${n.y-h/2})`,role:'button',tabindex:'0','aria-label':`${n.ja} ${n.en}`,'data-id':n.id});const r=svgEl('rect',{class:'node-card',width:w,height:h,rx:support?7:9});g.append(r);const ja=svgEl('text',{class:'node-ja',x:12,y:support?21:27});ja.textContent=lang==='ja'?n.ja:n.en;g.append(ja);const en=svgEl('text',{class:'node-en',x:12,y:support?36:45});en.textContent=lang==='ja'?n.en:n.region;g.append(en);if(!support){const role=svgEl('text',{class:'node-role',x:w-10,y:13,'text-anchor':'end'});role.textContent=n.type==='landrace'?'ORIGIN':n.year||'';g.append(role)}g.addEventListener('click',ev=>{ev.stopPropagation();setSelected(n.id)});g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();setSelected(n.id)}});vp.append(g)});
-applyTransform(svg)}
-const viewStates=new WeakMap();function stateFor(svg){if(!viewStates.has(svg))viewStates.set(svg,{scale:1,tx:0,ty:0});return viewStates.get(svg)}function applyTransform(svg){const g=$('.graph-viewport',svg);if(!g)return;const s=stateFor(svg);g.setAttribute('transform',`translate(${s.tx} ${s.ty}) scale(${s.scale})`)}function zoom(svg,f){const s=stateFor(svg);s.scale=Math.max(.55,Math.min(2.4,s.scale*f));applyTransform(svg)}function fit(svg){const s=stateFor(svg);s.scale=1;s.tx=0;s.ty=0;applyTransform(svg)}
-function wirePanZoom(svg,{pinch=false}={}){if(!svg)return;let drag=null,pointers=new Map(),pinchStart=null;svg.addEventListener('pointerdown',e=>{if(e.target.closest?.('.node'))return;svg.setPointerCapture?.(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1)drag={x:e.clientX,y:e.clientY,tx:stateFor(svg).tx,ty:stateFor(svg).ty};if(pinch&&pointers.size===2){const a=[...pointers.values()];pinchStart={dist:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),scale:stateFor(svg).scale}}});svg.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&pointers.size===2&&pinchStart){const a=[...pointers.values()],dist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);stateFor(svg).scale=Math.max(.55,Math.min(2.4,pinchStart.scale*dist/pinchStart.dist));applyTransform(svg);return}if(drag&&pointers.size===1){const s=stateFor(svg),scaleX=1840/svg.clientWidth,scaleY=980/svg.clientHeight;s.tx=drag.tx+(e.clientX-drag.x)*scaleX/s.scale;s.ty=drag.ty+(e.clientY-drag.y)*scaleY/s.scale;applyTransform(svg)}});const up=e=>{pointers.delete(e.pointerId);if(pointers.size<2)pinchStart=null;if(!pointers.size)drag=null};svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);svg.addEventListener('wheel',e=>{if(!(e.ctrlKey||e.metaKey))return;e.preventDefault();zoom(svg,e.deltaY<0?1.1:.9)},{passive:false})}
-function nodeButton(id){const n=byId.get(id);if(!n)return'';return`<button class="family-node" data-mobile-select="${n.id}"><strong>${lang==='ja'?n.ja:n.en}</strong><small>${lang==='ja'?n.en:n.region}</small></button>`}
-function sourcesFor(id){const ids=new Set(byId.get(id)?.sources||[]);D.events.forEach(e=>{if(e.child===id||e.parents.includes(id))e.sources.forEach(s=>ids.add(s))});return[...ids].map(s=>D.sources[s]).filter(Boolean)}
-function detailHTML(n,mobile=false){const ps=parentsOf(n.id),cs=childrenOf(n.id),src=sourcesFor(n.id);return`${mobile?'':'<div class="detail-tag"><span>SELECTED RICE</span><span>'+ (n.year||'—') +'</span></div>'}<h3>${lang==='ja'?n.ja:n.en}</h3><span class="detail-en">${lang==='ja'?n.en:n.ja}</span><p class="detail-summary">${text(n)}</p><div class="detail-stats"><div><small>REGION</small><b>${n.region}</b></div><div><small>TYPE</small><b>${n.type.toUpperCase()}</b></div><div><small>PARENTS</small><b>${ps.length}</b></div><div><small>CHILDREN</small><b>${cs.length}</b></div></div>${ps.length?`<div class="relation-block"><span>PARENTS</span><div class="relation-links">${ps.map(id=>`<button data-detail-select="${id}">${lang==='ja'?byId.get(id).ja:byId.get(id).en}</button>`).join('')}</div></div>`:''}${cs.length?`<div class="relation-block"><span>CHILDREN</span><div class="relation-links">${cs.map(id=>`<button data-detail-select="${id}">${lang==='ja'?byId.get(id).ja:byId.get(id).en}</button>`).join('')}</div></div>`:''}<div class="source-links">${src.map(s=>`<a href="${s.url}" target="_blank" rel="noreferrer">${s.org} / ${s.title} ↗</a>`).join('')}</div>`}
-function renderDetail(){const n=byId.get(selected);$('#detailPanel').innerHTML=detailHTML(n);$('#mobileDetail').innerHTML=detailHTML(n,true);$$('[data-detail-select]').forEach(b=>b.onclick=()=>setSelected(b.dataset.detailSelect))}
-function renderMobile(){const n=byId.get(selected),ps=parentsOf(selected),cs=childrenOf(selected);$('#mobileYear').textContent=n.year||'YEAR —';$('#mobileRegion').textContent=n.region;$('#mobileParentCount').textContent=ps.length;$('#mobileChildCount').textContent=cs.length;$('#mobileParents').innerHTML=ps.length?ps.map(nodeButton).join(''):`<div class="empty-node">${n.type==='landrace'?(lang==='ja'?'この図では起点':'ORIGIN IN THIS MAP'):(lang==='ja'?'親系統は未表示':'PARENTS NOT SHOWN')}</div>`;$('#mobileChildren').innerHTML=cs.length?cs.map(nodeButton).join(''):`<div class="empty-node">${lang==='ja'?'v1で表示する直系の子なし':'NO DIRECT CHILD IN V1'}</div>`;$('#mobileSelected').innerHTML=`<span class="selected-label">SELECTED RICE</span><h3>${lang==='ja'?n.ja:n.en}</h3><small>${lang==='ja'?n.en:n.ja} · ${n.region}${n.year?' · '+n.year:''}</small><p>${text(n)}</p>`;$$('[data-mobile-select]').forEach(b=>b.onclick=()=>setSelected(b.dataset.mobileSelect));$('#fullMapTitle').textContent=lang==='ja'?n.ja:n.en}
-function renderIndex(){const box=$('#indexGrid');box.innerHTML=D.nodes.filter(n=>n.featured).map(n=>`<a class="index-card" href="?rice=${n.id}#lineage" data-index="${[n.ja,n.en,n.region].join(' ').toLowerCase()}"><div class="index-card-top"><span>${n.region}</span><span>${n.year||'—'}</span></div><h3>${lang==='ja'?n.ja:n.en}</h3><p>${text(n)}</p></a>`).join('')}
-function renderSources(){const box=$('#sourceGrid');box.innerHTML=Object.values(D.sources).map(s=>`<a class="source-card" href="${s.url}" target="_blank" rel="noreferrer"><span class="source-tier">TIER ${s.tier}</span><strong>${s.org}</strong><small>${s.title}</small><span class="source-arrow">↗</span></a>`).join('')}
-function renderAll(){document.body.dataset.lang=lang;renderGraph($('#lineageSvg'));renderGraph($('#fullLineageSvg'));renderDetail();renderMobile();renderIndex();renderSources()}
-function search(q){q=q.trim().toLowerCase();return!q?[]:D.nodes.filter(n=>`${n.ja} ${n.en} ${n.region}`.toLowerCase().includes(q)).slice(0,10)}function renderSearch(){const input=$('#riceSearch'),out=$('#searchResults'),res=search(input.value);if(!input.value.trim()){out.hidden=true;return}out.innerHTML=res.length?res.map(n=>`<button class="search-result" data-search-select="${n.id}"><strong>${n.ja} / ${n.en}</strong><small>${n.region}</small></button>`).join(''):`<div class="search-result"><small>NO MATCH</small></div>`;out.hidden=false;$$('[data-search-select]',out).forEach(b=>b.onclick=()=>{input.value='';out.hidden=true;setSelected(b.dataset.searchSelect,{scroll:true})})}
-$('#riceSearch').addEventListener('input',renderSearch);$('#searchClear').onclick=()=>{$('#riceSearch').value='';$('#searchResults').hidden=true;$('#riceSearch').focus()};document.addEventListener('click',e=>{if(!e.target.closest('.search-box'))$('#searchResults').hidden=true});
-$$('[data-select-rice],[data-start-rice]').forEach(b=>b.addEventListener('click',e=>{const id=b.dataset.selectRice||b.dataset.startRice;if(id){e.preventDefault();setSelected(id,{scroll:true})}}));
-$('#langToggle').onclick=()=>{lang=lang==='ja'?'en':'ja';localStorage.setItem('rice-lineage-lang',lang);renderAll()};
-$('#indexSearch').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();$$('.index-card').forEach(c=>c.hidden=!!q&&!c.dataset.index.includes(q))});
-const mainSvg=$('#lineageSvg'),fullSvg=$('#fullLineageSvg');wirePanZoom(mainSvg);wirePanZoom(fullSvg,{pinch:true});$('#zoomIn').onclick=()=>zoom(mainSvg,1.15);$('#zoomOut').onclick=()=>zoom(mainSvg,.87);$('#fitMap').onclick=()=>fit(mainSvg);$('#resetMap').onclick=()=>{fit(mainSvg);setSelected(D.defaultRice)};$('#fullZoomIn').onclick=()=>zoom(fullSvg,1.15);$('#fullZoomOut').onclick=()=>zoom(fullSvg,.87);$('#fullFit').onclick=()=>fit(fullSvg);
-function openFullMap(){const m=$('#fullMapModal');m.hidden=false;document.body.style.overflow='hidden';fit(fullSvg);renderGraph(fullSvg);$('#closeFullMap').focus()}function closeFullMap(){const m=$('#fullMapModal');m.hidden=true;document.body.style.overflow=''}$('#openFullMap').onclick=openFullMap;$('#closeFullMap').onclick=closeFullMap;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#fullMapModal').hidden)closeFullMap()});
-renderAll();
+const STORAGE='rice-lineage-arcade-v1';
+
+const missions=[
+  {
+    id:'yamada-nishiki',target:'yamada-nishiki',region:'HYOGO',summary:'山田錦の親と、その先のルーツを探しに行く。',
+    learn:'山田錦は山田穂と短稈渡船の交配から生まれた。短稈渡船は雄町から株選抜された系統。',
+    route:['yamada-ho','tankan-wataribune','omachi'],
+    questions:[
+      {current:'yamada-nishiki',prompt:'山田錦の親はどっち？',sub:'Find one documented parent.',correct:'yamada-ho',wrong:'gohyakumangoku'},
+      {current:'yamada-nishiki',prompt:'もう一人の親はどっち？',sub:'Find the other documented parent.',correct:'tankan-wataribune',wrong:'kikusui'},
+      {current:'tankan-wataribune',prompt:'短稈渡船はどこから？',sub:'Which variety was it selected from?',correct:'omachi',wrong:'takane-nishiki'}
+    ]
+  },
+  {
+    id:'gohyakumangoku',target:'gohyakumangoku',region:'NIIGATA',summary:'五百万石の両親から、雄町へつながる枝をたどる。',
+    learn:'五百万石は菊水と新200号の交配から育成された。菊水は中支旭と雄町を親に持つ。',
+    route:['kikusui','shin200','omachi','chushi-asahi'],
+    questions:[
+      {current:'gohyakumangoku',prompt:'五百万石の親はどっち？',sub:'Find one documented parent.',correct:'kikusui',wrong:'yamada-nishiki'},
+      {current:'gohyakumangoku',prompt:'もう一人の親はどっち？',sub:'Find the other documented parent.',correct:'shin200',wrong:'tankan-wataribune'},
+      {current:'kikusui',prompt:'菊水の親はどっち？',sub:'Trace one step further back.',correct:'omachi',wrong:'takane-nishiki'},
+      {current:'kikusui',prompt:'菊水のもう一人の親は？',sub:'Complete the Kikusui branch.',correct:'chushi-asahi',wrong:'yamada-ho'}
+    ]
+  },
+  {
+    id:'koshi-tanrei',target:'koshi-tanrei',region:'NIIGATA',summary:'新潟の越淡麗から、山田錦と五百万石へ分かれる道を走る。',
+    learn:'越淡麗は山田錦と五百万石を親に持つ。二つの大きな酒米系統がここで合流する。',
+    route:['yamada-nishiki','gohyakumangoku','tankan-wataribune','kikusui'],
+    questions:[
+      {current:'koshi-tanrei',prompt:'越淡麗の親はどっち？',sub:'Find one documented parent.',correct:'yamada-nishiki',wrong:'miyama-nishiki'},
+      {current:'koshi-tanrei',prompt:'もう一人の親はどっち？',sub:'Find the other documented parent.',correct:'gohyakumangoku',wrong:'goriki'},
+      {current:'yamada-nishiki',prompt:'山田錦の親へ戻れ！',sub:'Trace the Yamada Nishiki branch.',correct:'tankan-wataribune',wrong:'kikusui'},
+      {current:'gohyakumangoku',prompt:'五百万石の親へ戻れ！',sub:'Trace the Gohyakumangoku branch.',correct:'kikusui',wrong:'omachi'}
+    ]
+  },
+  {
+    id:'aiyama',target:'aiyama',region:'HYOGO',summary:'愛山から山雄67へ入り、山田錦と雄町の合流点まで戻る。',
+    learn:'愛山は愛船117と山雄67を親に持つ。山雄67は山田錦と雄町を親に持つため、愛山は山田錦の直子ではなく子孫。',
+    route:['aisen117','yamayu67','yamada-nishiki','omachi'],
+    questions:[
+      {current:'aiyama',prompt:'愛山の親はどっち？',sub:'Find one documented parent.',correct:'aisen117',wrong:'gohyakumangoku'},
+      {current:'aiyama',prompt:'もう一人の親はどっち？',sub:'Find the other documented parent.',correct:'yamayu67',wrong:'miyama-nishiki'},
+      {current:'yamayu67',prompt:'山雄67の親はどっち？',sub:'Trace one branch backward.',correct:'yamada-nishiki',wrong:'kikusui'},
+      {current:'yamayu67',prompt:'山雄67のもう一人の親は？',sub:'Complete the branch.',correct:'omachi',wrong:'goriki'}
+    ]
+  },
+  {
+    id:'hattan-nishiki-1',target:'hattan-nishiki-1',region:'HIROSHIMA',summary:'八反錦1号の二つの親を当てる短距離ステージ。',
+    learn:'八反錦1号は八反35号とアキツホを1973年に交配し、1984年に広島県の奨励品種となった。',
+    route:['hattan35','akitsuho'],
+    questions:[
+      {current:'hattan-nishiki-1',prompt:'八反錦1号の親はどっち？',sub:'Find one documented parent.',correct:'hattan35',wrong:'yamada-nishiki'},
+      {current:'hattan-nishiki-1',prompt:'もう一人の親はどっち？',sub:'Complete the Hattan Nishiki branch.',correct:'akitsuho',wrong:'gohyakumangoku'}
+    ]
+  }
+];
+
+const mapLayout={
+  'omachi':[9,26], 'yamada-ho':[23,13], 'tankan-wataribune':[28,36], 'yamada-nishiki':[47,40],
+  'chushi-asahi':[8,63], 'kikusui':[27,66], 'shin200':[16,86], 'gohyakumangoku':[48,74],
+  'koshi-tanrei':[75,62], 'yamayu67':[68,39], 'aisen117':[70,16], 'aiyama':[88,29],
+  'hattan35':[68,83], 'akitsuho':[86,83], 'hattan-nishiki-1':[80,95]
+};
+const mapEdges=[
+  ['omachi','tankan-wataribune','yamada-nishiki'], ['tankan-wataribune','yamada-nishiki','yamada-nishiki'], ['yamada-ho','yamada-nishiki','yamada-nishiki'],
+  ['chushi-asahi','kikusui','gohyakumangoku'], ['omachi','kikusui','gohyakumangoku'], ['kikusui','gohyakumangoku','gohyakumangoku'], ['shin200','gohyakumangoku','gohyakumangoku'],
+  ['yamada-nishiki','koshi-tanrei','koshi-tanrei'], ['gohyakumangoku','koshi-tanrei','koshi-tanrei'],
+  ['yamada-nishiki','yamayu67','aiyama'], ['omachi','yamayu67','aiyama'], ['yamayu67','aiyama','aiyama'], ['aisen117','aiyama','aiyama'],
+  ['hattan35','hattan-nishiki-1','hattan-nishiki-1'], ['akitsuho','hattan-nishiki-1','hattan-nishiki-1']
+];
+const state=loadState();
+let selectedMission=missions.find(m=>m.id===state.selected)||missions[0];
+let currentMission=null,qIndex=0,hearts=3,score=0,combo=0,choices=[],answerLocked=false,touchStartX=null,audioCtx=null;
+
+function loadState(){try{const raw=JSON.parse(localStorage.getItem(STORAGE)||'{}');return{completed:Array.isArray(raw.completed)?raw.completed:[],best:raw.best||{},vehicle:raw.vehicle||'coupe',selected:raw.selected||missions[0].id,sound:raw.sound!==false}}catch{return{completed:[],best:{},vehicle:'coupe',selected:missions[0].id,sound:true}}}
+function saveState(){state.selected=selectedMission.id;localStorage.setItem(STORAGE,JSON.stringify(state))}
+function node(id){return byId.get(id)||{id,ja:id,en:id.toUpperCase(),region:'—'}}
+function missionIndex(id){return missions.findIndex(m=>m.id===id)}
+function isUnlocked(m){const i=missionIndex(m.id);return i===0||state.completed.includes(missions[i-1].id)||state.completed.includes(m.id)}
+function allClear(){return missions.every(m=>state.completed.includes(m.id))}
+function formatScore(n){return String(Math.max(0,n)).padStart(4,'0')}
+
+function showScreen(which){['boardScreen','arcadeScreen','clearScreen'].forEach(id=>{const el=$('#'+id);const active=id===which;el.hidden=!active;el.classList.toggle('is-active',active)});window.scrollTo(0,0)}
+
+function vehicleSVG(type=state.vehicle){
+  if(type==='truck')return `<svg viewBox="0 0 92 56" shape-rendering="crispEdges" aria-hidden="true"><g class="truck-sprite"><rect x="18" y="8" width="48" height="30" rx="2"/><rect x="12" y="24" width="68" height="18"/><rect class="glass" x="24" y="12" width="34" height="12"/><rect class="bumper" x="8" y="40" width="76" height="6"/><rect class="lamp" x="17" y="30" width="10" height="7"/><rect class="lamp" x="65" y="30" width="10" height="7"/><rect class="plate" x="35" y="32" width="22" height="8"/><rect class="wheel" x="18" y="45" width="13" height="8"/><rect class="wheel" x="61" y="45" width="13" height="8"/></g></svg>`;
+  return `<svg viewBox="0 0 108 52" shape-rendering="crispEdges" aria-hidden="true"><g class="coupe-sprite"><path d="M20 34h5l7-17h44l10 17h6v11H16V34z"/><path class="glass" d="M37 19h34l8 14H29z"/><rect class="bumper" x="13" y="39" width="82" height="7"/><rect class="lamp" x="24" y="32" width="12" height="8"/><rect class="lamp" x="72" y="32" width="12" height="8"/><rect class="plate" x="45" y="35" width="20" height="7"/><rect class="wheel" x="22" y="45" width="14" height="6"/><rect class="wheel" x="72" y="45" width="14" height="6"/></g></svg>`
+}
+function renderVehicles(){['vehicleMini','vehicleLarge','clearVehicle'].forEach(id=>{const el=$('#'+id);if(el)el.innerHTML=vehicleSVG()});$('#vehicleName').textContent=state.vehicle==='truck'?'NEON KEI TRUCK':'LINEAGE COUPE';const sw=$('#vehicleSwitch');sw.hidden=!allClear();sw.textContent=state.vehicle==='truck'?'COUPEへ':'軽トラへ'}
+
+function renderBoard(){
+  $('#boardProgress').textContent=`${state.completed.length} / ${missions.length}`;
+  const nodesBox=$('#boardNodes');nodesBox.innerHTML='';
+  Object.entries(mapLayout).forEach(([id,[x,y]])=>{
+    const n=node(id),m=missions.find(v=>v.target===id),isTarget=!!m,unlocked=m?isUnlocked(m):true,done=m?state.completed.includes(m.id):false;
+    const b=document.createElement(isTarget?'button':'div');b.className=`map-node ${isTarget?'target':'support'} ${done?'done':''} ${isTarget&&!unlocked?'locked':''}`;b.style.left=x+'%';b.style.top=y+'%';b.dataset.id=id;
+    b.innerHTML=`<span class="grain"></span><strong>${n.ja}</strong><small>${n.en}</small>${isTarget?`<i>${done?'CLEAR':unlocked?'DRIVE':'LOCK'}</i>`:''}`;
+    if(isTarget){b.type='button';b.disabled=!unlocked;b.addEventListener('click',()=>selectMission(m.id))}
+    nodesBox.append(b)
+  });
+  const svg=$('#boardLines');svg.innerHTML='';
+  mapEdges.forEach(([a,b,owner])=>{const pa=mapLayout[a],pb=mapLayout[b];if(!pa||!pb)return;const done=state.completed.includes(owner);const ownerMission=missions.find(m=>m.id===owner);const unlocked=ownerMission?isUnlocked(ownerMission):true;const p=document.createElementNS('http://www.w3.org/2000/svg','path');const x1=pa[0]*10,y1=pa[1]*6.5,x2=pb[0]*10,y2=pb[1]*6.5,mid=(y1+y2)/2;p.setAttribute('d',`M${x1},${y1} C${x1},${mid} ${x2},${mid} ${x2},${y2}`);p.setAttribute('class',`board-edge ${done?'done':unlocked?'ready':'locked'}`);svg.append(p)});
+  if(allClear())$('#paperBoard').classList.add('all-clear');else $('#paperBoard').classList.remove('all-clear');
+  renderDock();renderVehicles();
+}
+function selectMission(id){const m=missions.find(v=>v.id===id);if(!m||!isUnlocked(m))return;selectedMission=m;saveState();renderDock();$$('.map-node.target').forEach(el=>el.classList.toggle('selected',el.dataset.id===m.target))}
+function renderDock(){
+  const m=selectedMission,i=missionIndex(m.id),done=state.completed.includes(m.id),unlocked=isUnlocked(m),n=node(m.target);
+  $('#dockNumber').textContent=String(i+1).padStart(2,'0');$('#dockTitle').textContent=n.ja;$('#dockSummary').textContent=m.summary;$('#dockMeta').textContent=`${m.questions.length} CHECKPOINTS / ${m.region}`;$('#dockStatus').textContent=done?'CLEARED':unlocked?'READY':'LOCKED';$('#dockStatus').className=`status-pill ${done?'done':''}`;const btn=$('#startMission');btn.disabled=!unlocked;btn.querySelector('span').textContent=done?'RUN AGAIN':'START ENGINE';
+  $$('.map-node.target').forEach(el=>el.classList.toggle('selected',el.dataset.id===m.target))
+}
+
+function startMission(){
+  currentMission=selectedMission;qIndex=0;hearts=3;score=0;combo=0;answerLocked=false;$('#gameOver').hidden=true;showScreen('arcadeScreen');renderVehicles();renderQuestion();playTone('start')
+}
+function renderQuestion(){
+  const q=currentMission.questions[qIndex],cur=node(q.current),correct=node(q.correct),wrong=node(q.wrong);
+  $('#checkpointNow').textContent=qIndex+1;$('#checkpointTotal').textContent=currentMission.questions.length;$('#scoreValue').textContent=formatScore(score);$('#comboValue').textContent=combo;$('#currentRiceJa').textContent=cur.ja;$('#currentRiceEn').textContent=cur.en;$('#carPlate').textContent=cur.ja+'号';$('#questionKicker').textContent=`CHECKPOINT ${qIndex+1}`;$('#questionText').textContent=q.prompt;$('#questionSub').textContent=q.sub;renderHearts();
+  choices=Math.random()>.5?[{...correct,ok:true},{...wrong,ok:false}]:[{...wrong,ok:false},{...correct,ok:true}];setChoice($('#leftChoice'),choices[0]);setChoice($('#rightChoice'),choices[1]);answerLocked=false;$('#feedback').className='feedback';$('#feedback').textContent='';$('#arcadeStage').classList.remove('wrong-flash','correct-flash');$('#vehicleWrap').className='vehicle-wrap';
+}
+function setChoice(el,n){el.dataset.id=n.id;el.querySelector('strong').textContent=n.ja;el.querySelector('small').textContent=n.en}
+function renderHearts(){const row=$('#lifeRow');row.innerHTML='';for(let i=0;i<3;i++){const s=document.createElement('span');s.className=i<hearts?'heart live':'heart';s.textContent='♥';row.append(s)}row.setAttribute('aria-label',`残りハート${hearts}`)}
+function answer(side){
+  if(answerLocked||!currentMission)return;answerLocked=true;const pick=side==='left'?choices[0]:choices[1],correct=pick.ok;const vw=$('#vehicleWrap');vw.classList.add(side==='left'?'turn-left':'turn-right');
+  if(correct){combo++;const gain=100+(combo-1)*20;score+=gain;$('#scoreValue').textContent=formatScore(score);$('#comboValue').textContent=combo;$('#arcadeStage').classList.add('correct-flash');const f=$('#feedback');f.textContent=`GOOD! +${gain}`;f.className='feedback show good';playTone('correct');setTimeout(()=>{qIndex++;if(qIndex>=currentMission.questions.length)finishMission();else renderQuestion()},720)}
+  else{combo=0;hearts--;score=Math.max(0,score-50);$('#scoreValue').textContent=formatScore(score);$('#comboValue').textContent=combo;renderHearts();$('#arcadeStage').classList.add('wrong-flash');const f=$('#feedback');f.textContent='WRONG WAY! -1 ♥';f.className='feedback show bad';playTone('wrong');setTimeout(()=>{if(hearts<=0){$('#gameOver').hidden=false;answerLocked=false}else{answerLocked=false;$('#vehicleWrap').className='vehicle-wrap';$('#arcadeStage').classList.remove('wrong-flash');f.className='feedback';f.textContent=''}},650)}
+}
+function finishMission(){
+  const m=currentMission;const wasDone=state.completed.includes(m.id);if(!wasDone)state.completed.push(m.id);state.best[m.id]=Math.max(state.best[m.id]||0,score);saveState();renderClear(m,score);playTone('clear');showScreen('clearScreen')
+}
+function renderClear(m,missionScore){
+  const target=node(m.target);$('#rewardScore').textContent='+'+missionScore;$('#learnTitle').textContent=target.ja;$('#learnText').textContent=m.learn;$('#cardName').textContent=target.ja;const route=$('#clearRoute');route.innerHTML=`<span class="route-child"><strong>${target.ja}</strong><small>${target.en}</small></span><b>← ROOTS ←</b><div>${m.route.slice(0,4).map(id=>`<span><strong>${node(id).ja}</strong><small>${node(id).en}</small></span>`).join('')}</div>`;renderVehicles();
+}
+function backToBoard(){const just=currentMission;currentMission=null;renderBoard();if(just){const i=missionIndex(just.id),next=missions[i+1];if(next&&isUnlocked(next))selectMission(next.id)}showScreen('boardScreen')}
+
+function openInfo(){renderData();$('#infoModal').hidden=false;document.body.classList.add('modal-open');$('#closeInfo').focus()}
+function closeInfo(){$('#infoModal').hidden=true;document.body.classList.remove('modal-open')}
+function renderData(){
+  $('#missionIndex').innerHTML=missions.map((m,i)=>`<article><small>${String(i+1).padStart(2,'0')} / ${m.region}</small><strong>${node(m.target).ja}</strong><span>${m.summary}</span></article>`).join('');
+  $('#sourceList').innerHTML=Object.values(D.sources).map(s=>`<a href="${s.url}" target="_blank" rel="noreferrer"><span>TIER ${s.tier}</span><strong>${s.org}</strong><small>${s.title}</small><b>↗</b></a>`).join('')
+}
+function resetProgress(){if(!confirm('クリア状況と車両アンロックをリセットしますか？'))return;state.completed=[];state.best={};state.vehicle='coupe';selectedMission=missions[0];saveState();renderBoard()}
+function switchVehicle(){if(!allClear())return;state.vehicle=state.vehicle==='coupe'?'truck':'coupe';saveState();renderVehicles()}
+
+function ensureAudio(){if(!state.sound)return null;if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;audioCtx=new AC()}if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+function beep(freq,dur=.08,when=0,type='square',vol=.035){const c=ensureAudio();if(!c)return;const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,c.currentTime+when);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+when+dur);o.connect(g);g.connect(c.destination);o.start(c.currentTime+when);o.stop(c.currentTime+when+dur)}
+function playTone(kind){if(!state.sound)return;if(kind==='correct'){beep(523,.08);beep(659,.08,.08);beep(784,.12,.16)}else if(kind==='wrong'){beep(180,.16,0,'sawtooth',.025);beep(130,.18,.12,'square',.025)}else if(kind==='clear'){[523,659,784,1047].forEach((f,i)=>beep(f,.13,i*.1))}else beep(330,.06)}
+function toggleSound(){state.sound=!state.sound;saveState();renderSound();if(state.sound)playTone('start')}
+function renderSound(){const b=$('#soundToggle');b.textContent=state.sound?'SOUND ON':'SOUND OFF';b.setAttribute('aria-pressed',state.sound?'true':'false')}
+
+$('#startMission').addEventListener('click',startMission);$('#leftChoice').addEventListener('click',()=>answer('left'));$('#rightChoice').addEventListener('click',()=>answer('right'));$('#leftControl').addEventListener('click',()=>answer('left'));$('#rightControl').addEventListener('click',()=>answer('right'));$('#quitMission').addEventListener('click',()=>{currentMission=null;renderBoard();showScreen('boardScreen')});$('#backToBoard').addEventListener('click',backToBoard);$('#retryMission').addEventListener('click',startMission);$('#gameOverBoard').addEventListener('click',()=>{$('#gameOver').hidden=true;currentMission=null;renderBoard();showScreen('boardScreen')});$('#openInfo').addEventListener('click',openInfo);$('#closeInfo').addEventListener('click',closeInfo);$('#infoModal').addEventListener('click',e=>{if(e.target===$('#infoModal'))closeInfo()});$('#resetProgress').addEventListener('click',resetProgress);$('#vehicleSwitch').addEventListener('click',switchVehicle);$('#soundToggle').addEventListener('click',toggleSound);
+
+document.addEventListener('keydown',e=>{if(!$('#arcadeScreen').hidden && $('#gameOver').hidden){if(e.key==='ArrowLeft')answer('left');if(e.key==='ArrowRight')answer('right')}if(e.key==='Escape'&&!$('#infoModal').hidden)closeInfo()});
+const stage=$('#arcadeStage');stage.addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0]?.clientX??null},{passive:true});stage.addEventListener('touchend',e=>{if(touchStartX===null)return;const dx=(e.changedTouches[0]?.clientX??touchStartX)-touchStartX;touchStartX=null;if(Math.abs(dx)<46)return;answer(dx<0?'left':'right')},{passive:true});
+
+renderSound();renderBoard();selectMission(selectedMission.id);
 })();
