@@ -1,50 +1,76 @@
 # RICE LINEAGE
 
-Interactive Editorial inside SAT FERMENTATION PLAYGROUND.
+Interactive Experience inside FERMENTATION PLAYGROUND.
 
 ## Route
 
 `/rice-lineage/`
 
-## v1
+## Arcade v1 — 2026-09-11
 
-- 24 featured rice varieties
-- 10 supporting / breeding-line nodes
-- event-based DAG, not a tree
-- relationship types: CROSS / SELECTION / MUTATION / origin
-- desktop: full lineage canvas with pan, controlled zoom, search, fit, reset
-- iPhone portrait: Parents → Selected Rice → Children local lineage
-- full-lineage overlay on mobile with pan / pinch / zoom
-- JA / EN UI and bilingual data
-- query-state deep links via `?rice=<id>`
-- source links shown from selected nodes
-- lineage index for discovery and SEO support
+The previous full genealogy viewer has been rebuilt as a lightweight game-first experience.
 
-## Data architecture
+Core loop:
 
-`data.js` is independent from rendering logic in `app.js`.
+1. **BOARD** — choose a large sake-rice mission on a calm paper genealogy map.
+2. **START ENGINE** — enter a neon 16-bit / neo-city-pop rice-field drive.
+3. **FORK** — choose the documented parent / origin route with tap, swipe, or arrow keys.
+4. **CLEAR** — reveal the relationship, earn score, and return to the board.
+5. The completed lineage edge becomes vivid on the board.
 
-A visible edge is an event:
+### v1 missions
 
-```text
-parents[] -> LineageEvent(type, year, sources[]) -> child
-```
+- 山田錦
+- 五百万石
+- 越淡麗
+- 愛山
+- 八反錦1号
 
-This avoids pretending that cross-breeding, selection and mutation are the same operation.
+The fifth clear unlocks a bonus **kei-truck vehicle skin**.
 
-See `SOURCE_LEDGER.md` before adding or changing a relationship.
+## Lightweight implementation
 
-## Visual direction
+- plain HTML + CSS + vanilla JS
+- no game engine
+- no external image payload for gameplay
+- vehicles are inline SVG sprites
+- countryside / neon scenery is CSS
+- 8-bit-style SFX use Web Audio oscillators, so no audio files are downloaded
+- progress is stored in `localStorage`
 
-FERMENTATION PLAYGROUND shell:
-- paper background
-- ink
-- SAT green / orange / yellow
-- mono research labels
-- subtle grid / analog offset
+## Data integrity
 
-Lineage instrument:
-- thin neutral lines
-- selected path only becomes vivid
-- unrelated nodes remain visible but recede
-- no per-variety rainbow coloring
+`data.js` remains independent from rendering / game logic in `app.js`.
+
+The game only uses relationships already documented in `SOURCE_LEDGER.md`.
+
+Important distinction:
+
+- `CROSS`: the game can ask for either documented parent.
+- `SELECTION`: the prompt explicitly asks which variety a line was selected from; it is not mislabeled as cross-breeding.
+- unsupported pedigree links are not used as game answers.
+
+### Yamada Nishiki correction
+
+The verified v1 relationship is:
+
+`山田穂 × 短稈渡船 → 山田錦`
+
+The earlier visual concept used the shorter label `渡船`; the playable game deliberately uses the verified `短稈渡船` relationship from the existing source ledger.
+
+## Controls
+
+- iPhone portrait first
+- tap either road sign or bottom left/right button
+- horizontal swipe anywhere on the arcade stage
+- desktop: left / right arrow keys
+- wrong route: heart -1 and -50 points
+- correct route: +100 plus combo bonus
+
+## Files
+
+- `index.html` — BOARD / ARCADE / CLEAR screens and data modal
+- `styles.css` — paper board + neon pixel arcade visual system
+- `app.js` — game state, questions, scoring, controls, audio, unlocks
+- `data.js` — authoritative rice / pedigree dataset
+- `SOURCE_LEDGER.md` — evidence ledger; review before changing relationships
