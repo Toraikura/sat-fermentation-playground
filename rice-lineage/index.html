@@ -16,18 +16,40 @@
 <link rel="icon" href="../favicon.svg">
 <link rel="stylesheet" href="./styles.css?v=20260911-arcade1">
 <style>
-/* 2026-09-11 mobile UX hotfix: put the game action before the map and keep CLEAR CTA reachable. */
-.quick-start-hint{margin:18px 0 7px;font:900 9px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.12em;color:#1f513f}
-.quick-start-dock{margin:0 0 22px}
-.quick-start-dock .engine-btn{min-height:64px;font-size:13px}
+.quick-start-hint{margin:18px 0 8px;font:900 9px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.12em;color:#1f513f}
+.quick-start-dock{margin:0 0 18px;padding:12px;align-items:stretch;gap:12px;position:relative;overflow:hidden}
+.quick-start-dock::before{content:"";position:absolute;inset:auto -40px -48px auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#f0df9b 0 34%,#0000 35%);opacity:.32;pointer-events:none}
+.quick-start-dock .mission-copy p{max-width:28em}
+.quick-start-dock .engine-btn{grid-column:1/-1;min-width:0;width:100%;height:76px;padding:0 18px 0 20px;position:relative;overflow:hidden;border:2px solid #fff7de;background:linear-gradient(135deg,#10684b 0%,#145241 50%,#103a33 100%);box-shadow:5px 5px 0 #c79a2d}
+.quick-start-dock .engine-btn::before{content:"PLAY FIRST\Aタップしてスタート";white-space:pre;position:absolute;left:18px;top:10px;font:800 8px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.08em;line-height:1.5;color:#dffef6;opacity:.95}
+.quick-start-dock .engine-btn span{position:absolute;left:18px;bottom:10px;font-size:24px;line-height:1;letter-spacing:.06em;text-shadow:0 0 10px #22dfff;z-index:2}
+.quick-start-dock .engine-btn::after{content:"START";position:absolute;right:56px;top:50%;transform:translateY(-50%);width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font:900 13px ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;letter-spacing:.08em;color:#fff;background:radial-gradient(circle at 35% 35%,#2b43ff 0%,#5220a1 38%,#141b42 100%);border:3px solid #22e9ff;box-shadow:inset 0 0 0 4px #ff4fd0,0 0 14px #23d8ff,0 0 22px #ff3f91}
+.quick-start-dock .engine-btn b{position:relative;z-index:2;font-size:22px}
+.quick-start-dock .engine-btn:disabled::after{opacity:.45}
+.lineage-map{height:580px;background:repeating-linear-gradient(45deg,#80cf58 0 18px,#75c34f 18px 36px)}
+.lineage-map::before,.lineage-map::after{display:none}
+.board-edge{stroke:#68645d;stroke-width:12;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 0 #0000)}
+.board-edge.ready{stroke:#6d685f;stroke-dasharray:none;opacity:.95}
+.board-edge.done{stroke:#4f4a45;stroke-width:14;filter:drop-shadow(0 0 4px #fff3bf)}
+.board-edge.locked{stroke:#afa88f;stroke-width:10;stroke-dasharray:10 12;opacity:.65}
+.map-node.target{border-radius:24px;box-shadow:0 0 0 5px #fff8e8}
+.map-node.support{border-radius:14px;background:#f5efd7}
+.map-caption{font-size:10px}
 @media(max-width:720px){
   .board-wrap{padding-top:20px}
-  .quick-start-hint{margin-top:16px;font-size:8px}
-  .quick-start-dock{margin-bottom:18px;box-shadow:4px 4px 0 #c79a2d}
-  .quick-start-dock .engine-btn{height:58px;font-size:13px}
-  .paper-board{margin-top:0}
-  .clear-screen{min-height:calc(100dvh - 54px);overflow:visible}
-  .clear-stage{height:auto!important;min-height:calc(100dvh - 54px);max-height:none;overflow:visible;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+  .quick-start-hint{margin-top:14px;font-size:8px}
+  .quick-start-dock{margin-bottom:14px;padding:10px}
+  .quick-start-dock .engine-btn{height:62px;padding-right:90px}
+  .quick-start-dock .engine-btn::before{left:14px;top:8px;font-size:7px}
+  .quick-start-dock .engine-btn span{left:14px;bottom:9px;font-size:18px}
+  .quick-start-dock .engine-btn::after{width:52px;height:52px;right:34px;font-size:10px;border-width:2px;box-shadow:inset 0 0 0 3px #ff4fd0,0 0 10px #23d8ff,0 0 16px #ff3f91}
+  .quick-start-dock .engine-btn b{font-size:18px}
+  .lineage-map{height:430px}
+  .board-edge{stroke-width:10}
+  .board-edge.done{stroke-width:12}
+  .board-edge.locked{stroke-width:8}
+  .clear-screen{min-height:calc(100dvh - 54px);overflow:auto}
+  .clear-stage{height:auto;min-height:calc(100dvh - 54px);max-height:none;overflow:visible;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
   .clear-stage .next-btn{margin-bottom:calc(18px + env(safe-area-inset-bottom))}
 }
 </style>
@@ -79,7 +101,7 @@
             <svg class="map-lines" id="boardLines" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true"></svg>
             <div id="boardNodes"></div>
           </div>
-          <p class="map-caption">タップできる大きな丸がミッション。クリアすると、その系譜の線が色づきます。</p>
+          <p class="map-caption">下の家系図も、レトロなコースを走る感覚で。大きなノードをタップするとそのルートへ出発します。</p>
         </div>
 
         <div class="board-bottom">
@@ -152,6 +174,6 @@
 <div class="gameover" id="gameOver" hidden><div><small>NO MORE HEARTS</small><strong>GAME OVER</strong><p>もう一度このルートを走る？</p><button id="retryMission" type="button">RETRY</button><button id="gameOverBoard" type="button">BOARD</button></div></div>
 
 <script src="./data.js?v=20260910-1"></script>
-<script src="./app.js?v=20260911-arcade1"></script>
+<script src="./app.js?v=20260911-arcade2"></script>
 </body>
 </html>
