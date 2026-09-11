@@ -32,6 +32,7 @@ function allClear(){return missions.every(m=>state.completed.includes(m.id))}
 function formatScore(n){return String(Math.max(0,n)).padStart(4,'0')}
 function difficultyStars(n){return '★'.repeat(n)+'☆'.repeat(Math.max(0,5-n))}
 function resolveChoice(ref){return typeof ref==='string'?node(ref):ref}
+function shouldDirectStartFromBoard(m){return m.id===missions[0].id&&!state.completed.includes(m.id)}
 
 function showScreen(which){
   ['boardScreen','arcadeScreen','clearScreen'].forEach(id=>{const el=$('#'+id);const active=id===which;el.hidden=!active;el.classList.toggle('is-active',active)});
@@ -87,7 +88,12 @@ function renderBoard(){
     b.className=`map-node target ${done?'done':''} ${!unlocked?'locked':''} ${selectedMission.id===m.id?'selected':''}`;
     b.style.left=x+'%';b.style.top=y+'%';b.dataset.id=m.id;b.dataset.stage=String(missionIndex(m.id)+1).padStart(2,'0');
     b.innerHTML=`<span class="grain"></span><strong>${n.ja}</strong><small>${n.en}</small><i>${done?'CLEAR':unlocked?'DRIVE':'LOCK'}</i>`;
-    b.addEventListener('click',()=>selectMission(m.id));
+    b.addEventListener('click',()=>{
+      if(shouldDirectStartFromBoard(m)){
+        selectedMission=m;activeWorld=m.world;saveState();startMission();return
+      }
+      selectMission(m.id)
+    });
     nodesBox.append(b)
   });
 
