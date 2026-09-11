@@ -2,40 +2,139 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f3efe3">
-<title>RICE LINEAGE｜酒米の系譜・品種のつながりを辿る</title>
-<meta name="description" content="山田錦、雄町、五百万石、美山錦など、日本酒を支える酒米の親子関係と交配・選抜の系譜を、インタラクティブな家系図でたどるFERMENTATION PLAYGROUND。">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1028">
+<title>RICE LINEAGE｜酒米の系譜を走ってたどるゲーム</title>
+<meta name="description" content="山田錦、五百万石、越淡麗など、日本酒を支える酒米の系譜を、家系図ボードとネオンのドライブゲームで遊びながらたどるFERMENTATION PLAYGROUND。">
 <link rel="canonical" href="https://toraikura.github.io/sat-fermentation-playground/rice-lineage/">
 <meta property="og:title" content="RICE LINEAGE｜酒米の系譜">
-<meta property="og:description" content="米にも、血筋がある。一つの酒米を選び、親・子・祖先・子孫を線でたどるInteractive Editorial。">
+<meta property="og:description" content="家系図を選ぶ。エンジンをかける。正しい親へ走れ。酒米のルーツを遊びながらたどるミニゲーム。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://toraikura.github.io/sat-fermentation-playground/rice-lineage/">
 <meta property="og:image" content="https://toraikura.github.io/sat-fermentation-playground/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../favicon.svg">
-<link rel="stylesheet" href="./styles.css?v=20260910-1">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"RICE LINEAGE｜酒米の系譜","description":"酒米の親子関係・交配・選抜の系譜をたどるInteractive Editorial。","url":"https://toraikura.github.io/sat-fermentation-playground/rice-lineage/","isPartOf":{"@type":"WebSite","name":"SAT FERMENTATION PLAYGROUND","url":"https://toraikura.github.io/sat-fermentation-playground/"},"breadcrumb":{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"FERMENTATION PLAYGROUND","item":"https://toraikura.github.io/sat-fermentation-playground/"},{"@type":"ListItem","position":2,"name":"RICE LINEAGE","item":"https://toraikura.github.io/sat-fermentation-playground/rice-lineage/"}]}}</script>
+<link rel="stylesheet" href="./styles.css?v=20260911-arcade1">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"RICE LINEAGE｜酒米の系譜","applicationCategory":"GameApplication","operatingSystem":"Web","description":"酒米の親子関係・交配・選抜の系譜を、家系図ボードとドライブゲームでたどるInteractive Experience。","url":"https://toraikura.github.io/sat-fermentation-playground/rice-lineage/","isPartOf":{"@type":"WebSite","name":"FERMENTATION PLAYGROUND","url":"https://toraikura.github.io/sat-fermentation-playground/"}}</script>
 </head>
-<body data-lang="ja">
-<header class="topbar"><div class="wrap topbar-inner">
-<a class="brand" href="../" aria-label="FERMENTATION PLAYGROUNDへ戻る"><span class="sat-mark">SAT</span><span class="brand-context"><strong>FERMENTATION PLAYGROUND</strong><small>RICE LINEAGE / 03</small></span></a>
-<div class="topbar-actions"><span class="room-note">SAME CITY, DIFFERENT ROOM.</span><button class="lang-toggle" id="langToggle" type="button">JA / EN</button><a class="back" href="../">← PLAYGROUND</a></div>
-</div></header>
-<main>
-<section class="hero" id="intro"><div class="wrap hero-grid">
-<div class="hero-copy"><div class="eyebrow">INTERACTIVE ARCHIVE / SAKE RICE</div><h1>RICE <span>LINEAGE</span></h1><p class="jp-title">酒米の系譜</p><p class="hero-line lang-ja">米にも、血筋がある。</p><p class="hero-line lang-en">Every rice has a lineage.</p><p class="hero-sub lang-ja">ひとつの品種をたどると、親が見え、子が見え、遠い土地の酒米まで一本の線でつながっていく。</p><p class="hero-sub lang-en">Choose one variety and trace what came before—and what came next, through crosses, selections, places and time.</p><div class="hero-actions"><a href="#lineage" class="primary-cta" data-start-rice="yamada-nishiki"><span class="lang-ja">山田錦からたどる</span><span class="lang-en">TRACE FROM YAMADA NISHIKI</span><b>→</b></a><a href="#riceSearch" class="text-cta"><span class="lang-ja">米を探す</span><span class="lang-en">SEARCH RICE</span></a></div></div>
-<figure class="hero-art" aria-label="酒米の系譜を抽象化した枝分かれ図"><div class="art-label">LINEAGE SIGNAL / 01</div><svg viewBox="0 0 600 440" aria-hidden="true"><g class="ghost-lines"><path d="M62 96C170 96 165 206 274 206"/><path d="M64 310C168 310 166 206 274 206"/><path d="M274 206C376 206 362 106 476 106"/><path d="M274 206C384 206 378 218 520 218"/><path d="M274 206C380 206 374 332 484 332"/></g><g class="signal-lines"><path d="M64 310C168 310 166 206 274 206"/><path d="M274 206C384 206 378 218 520 218"/></g><circle cx="64" cy="96" r="7"/><circle cx="64" cy="310" r="7"/><circle class="selected-dot" cx="274" cy="206" r="13"/><circle cx="476" cy="106" r="7"/><circle cx="520" cy="218" r="7"/><circle cx="484" cy="332" r="7"/><text x="36" y="74">PARENT</text><text x="230" y="180">SELECTED</text><text x="470" y="195">NEXT</text></svg><figcaption class="lang-ja">一粒を選ぶと、眠っていた線が浮かび上がる。</figcaption><figcaption class="lang-en">Choose one grain. The hidden lines come alive.</figcaption></figure>
-</div></section>
-<section class="lineage-section" id="lineage"><div class="wrap"><div class="section-head"><div><p class="section-kicker">THE LINEAGE / INTERACTIVE INSTRUMENT</p><h2 class="lang-ja">米を選ぶ。線が、過去と未来をひらく。</h2><h2 class="lang-en">Choose a rice. Follow what came before—and what came next.</h2></div><div class="start-points"><span>START HERE</span><button data-select-rice="yamada-nishiki">YAMADA NISHIKI</button><button data-select-rice="omachi">OMACHI</button><button data-select-rice="gin-no-sato">KYUSHU</button></div></div>
-<div class="instrument"><div class="instrument-toolbar"><div class="search-box"><label for="riceSearch"><span class="lang-ja">酒米を探す</span><span class="lang-en">SEARCH RICE</span></label><div class="search-field"><input id="riceSearch" type="search" autocomplete="off" placeholder="山田錦 / YAMADA NISHIKI" aria-controls="searchResults"><button id="searchClear" type="button" aria-label="検索をクリア">×</button></div><div id="searchResults" class="search-results" hidden></div></div><div class="map-controls desktop-only"><button id="zoomOut" type="button">−</button><button id="zoomIn" type="button">＋</button><button id="fitMap" type="button">FIT</button><button id="resetMap" type="button">RESET</button></div></div>
-<div class="desktop-layout desktop-only"><div class="map-shell"><div class="era-axis" aria-hidden="true"><span>1850</span><span>1900</span><span>1950</span><span>2000</span><span>NOW</span></div><svg id="lineageSvg" class="lineage-svg panzoom" viewBox="0 0 1840 980" role="group" aria-label="酒米の系譜図"></svg><div class="map-hint"><span>DRAG = PAN</span><span>CTRL / ⌘ + WHEEL = ZOOM</span><span>CLICK = SELECT</span></div></div><aside class="detail-panel" id="detailPanel" aria-live="polite"></aside></div>
-<div class="mobile-lineage mobile-only"><div class="mobile-context"><span id="mobileYear">—</span><span id="mobileRegion">—</span></div><section class="generation-block"><div class="generation-label"><span>PARENTS</span><small id="mobileParentCount">0</small></div><div class="parent-grid" id="mobileParents"></div></section><div class="mobile-connector"><span></span><i></i></div><article class="selected-mobile" id="mobileSelected"></article><div class="mobile-connector down"><i></i><span></span></div><section class="generation-block"><div class="generation-label"><span>CHILDREN</span><small id="mobileChildCount">0</small></div><div class="children-rail" id="mobileChildren"></div></section><button type="button" class="full-lineage-btn" id="openFullMap"><span class="lang-ja">全体系譜を見る</span><span class="lang-en">VIEW FULL LINEAGE</span><b>↗</b></button><div class="mobile-detail" id="mobileDetail"></div></div></div>
-</div></section>
-<section class="science-note"><div class="wrap science-grid"><div><p class="section-kicker">HOW TO READ THE LINEAGE</p><h2 class="lang-ja">線は、全部同じ意味ではない。</h2><h2 class="lang-en">Not every line means the same thing.</h2><p class="science-lead lang-ja">これは栽培品種の交配・選抜・育成の系譜です。生物進化の系統樹ではありません。</p><p class="science-lead lang-en">This is a pedigree of cultivated rice varieties, not an evolutionary tree.</p></div><div class="legend-grid"><article><span class="legend-line cross"></span><b>CROSS</b><small class="lang-ja">複数の親を交配</small><small class="lang-en">cross-breeding</small></article><article><span class="legend-line selection"></span><b>SELECTION</b><small class="lang-ja">選抜・純系淘汰</small><small class="lang-en">selection / pure line</small></article><article><span class="legend-line mutation"></span><b>MUTATION</b><small class="lang-ja">突然変異育種</small><small class="lang-en">mutation breeding</small></article><article><span class="legend-root">●</span><b>NATIVE</b><small class="lang-ja">在来・起点</small><small class="lang-en">native / origin</small></article></div></div></section>
-<section class="evidence"><div class="wrap"><div class="evidence-statement"><p class="section-kicker">EVIDENCE POLICY</p><h2 class="lang-ja">分かっているつながりだけを描いています。<br>空白は、空白のまま残します。</h2><h2 class="lang-en">Only documented relationships are shown.<br>Unknowns stay unknown.</h2></div><details class="archive-details" id="lineageIndex"><summary><span class="lang-ja">LINEAGE INDEX / 収録酒米</span><span class="lang-en">LINEAGE INDEX / INCLUDED RICE</span><b>24</b></summary><div class="index-filter"><input id="indexSearch" type="search" placeholder="山田錦 / YAMADA NISHIKI"></div><div class="index-grid" id="indexGrid"></div></details><details class="archive-details" id="sourceArchive"><summary><span class="lang-ja">SOURCE ARCHIVE / 一次資料</span><span class="lang-en">SOURCE ARCHIVE / PRIMARY SOURCES</span><b>16</b></summary><p class="source-policy lang-ja">親子関係・交配・選抜の表示は、農研機構・県研究機関・酒類総合研究所などの一次資料を優先しています。資料が確認できない関係は描画しません。</p><p class="source-policy lang-en">Pedigree links prioritize primary sources from NARO, prefectural research institutions and NRIB. Relationships without supporting evidence are not drawn.</p><div class="source-grid" id="sourceGrid"></div></details></div></section>
-</main>
-<footer class="footer"><div class="wrap footer-inner"><div><strong>SAKE ART TOKYO</strong><small>FERMENTATION PLAYGROUND / RICE LINEAGE</small></div><a href="../">← BACK TO FERMENTATION PLAYGROUND</a></div></footer>
-<div class="full-map-modal" id="fullMapModal" hidden><div class="full-map-top"><div><small>RICE LINEAGE</small><strong id="fullMapTitle">山田錦</strong></div><div><button id="fullZoomOut" type="button">−</button><button id="fullZoomIn" type="button">＋</button><button id="fullFit" type="button">FIT</button><button id="closeFullMap" type="button" aria-label="Close">×</button></div></div><svg id="fullLineageSvg" class="lineage-svg panzoom" viewBox="0 0 1840 980" role="group" aria-label="酒米の全体系譜"></svg><div class="full-map-bottom"><span>DRAG / PINCH TO EXPLORE</span><span class="lang-ja">米をタップして移動</span><span class="lang-en">TAP A RICE TO MOVE</span></div></div>
-<script src="./data.js?v=20260910-1"></script><script src="./app.js?v=20260910-1"></script>
-</body></html>
+<body>
+<div class="app-shell" id="appShell">
+  <header class="site-bar">
+    <a class="fp-brand" href="../" aria-label="FERMENTATION PLAYGROUNDへ戻る">
+      <span class="fp-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>FERMENTATION PLAYGROUND</strong><small>発酵のあそびば / RICE LINEAGE</small></span>
+    </a>
+    <div class="site-actions">
+      <button class="tiny-btn" id="soundToggle" type="button" aria-pressed="false">SOUND ON</button>
+      <button class="tiny-btn" id="openInfo" type="button">DATA</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="screen board-screen is-active" id="boardScreen" aria-labelledby="boardTitle">
+      <div class="board-wrap">
+        <div class="board-heading">
+          <div>
+            <p class="eyebrow">RICE LINEAGE / 酒米の系譜</p>
+            <h1 id="boardTitle">線をつなげ。<br><span>ルーツを走れ。</span></h1>
+            <p class="board-lead">酒米を選ぶと、夜の田んぼへ。正しいルーツを走り切ると、家系図の線が一本ずつ目を覚ます。</p>
+          </div>
+          <div class="progress-stamp" aria-live="polite"><small>LINEAGE</small><strong id="boardProgress">0 / 5</strong><span>CONNECTED</span></div>
+        </div>
+
+        <div class="paper-board" id="paperBoard">
+          <div class="paper-board-top">
+            <div><small>THE BOARD</small><strong>SAKE RICE FAMILY MAP</strong></div>
+            <button type="button" class="reset-link" id="resetProgress">RESET</button>
+          </div>
+          <div class="lineage-map" id="lineageMap" aria-label="酒米の家系図ボード">
+            <svg class="map-lines" id="boardLines" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div id="boardNodes"></div>
+          </div>
+          <p class="map-caption">タップできる大きな丸がミッション。クリアすると、その系譜の線が色づきます。</p>
+        </div>
+
+        <aside class="mission-dock" id="missionDock" aria-live="polite">
+          <div class="mission-number"><small>SELECTED</small><strong id="dockNumber">01</strong></div>
+          <div class="mission-copy">
+            <span id="dockStatus" class="status-pill">READY</span>
+            <h2 id="dockTitle">山田錦</h2>
+            <p id="dockSummary">山田錦の親と、その先のルーツを探しに行く。</p>
+            <small id="dockMeta">3 CHECKPOINTS / HYOGO</small>
+          </div>
+          <button class="engine-btn" id="startMission" type="button"><span>START ENGINE</span><b>→</b></button>
+        </aside>
+
+        <div class="board-bottom">
+          <div class="vehicle-card">
+            <div class="vehicle-mini" id="vehicleMini" aria-hidden="true"></div>
+            <div><small>YOUR MACHINE</small><strong id="vehicleName">LINEAGE COUPE</strong><button id="vehicleSwitch" type="button" hidden>CHANGE</button></div>
+          </div>
+          <p>全部つなぐと <b>軽トラ</b> がアンロック。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen arcade-screen" id="arcadeScreen" aria-labelledby="arcadeTitle" hidden>
+      <div class="arcade-stage" id="arcadeStage">
+        <div class="scanlines" aria-hidden="true"></div>
+        <div class="pixel-sky" aria-hidden="true"><i class="star s1"></i><i class="star s2"></i><i class="star s3"></i><i class="star s4"></i><i class="sun"></i><i class="mountain m1"></i><i class="mountain m2"></i><i class="city"></i><i class="castle"></i></div>
+        <div class="field-layer" aria-hidden="true"><i class="field left"></i><i class="field right"></i><i class="canal left"></i><i class="canal right"></i></div>
+
+        <div class="arcade-hud">
+          <button class="hud-back" id="quitMission" type="button" aria-label="ボードへ戻る">←</button>
+          <div class="arcade-logo"><span>RICE</span> LINEAGE<small id="arcadeTitle">親をさがせ！ / FIND THE ROOT</small></div>
+          <div class="score-box"><small>SCORE</small><strong id="scoreValue">0000</strong></div>
+        </div>
+        <div class="hud-row">
+          <div class="stage-count"><span id="checkpointNow">1</span><b>/</b><span id="checkpointTotal">3</span></div>
+          <div class="life-row" id="lifeRow" aria-label="残りハート3"></div>
+          <div class="streak-box"><small>COMBO</small><strong id="comboValue">0</strong></div>
+        </div>
+
+        <div class="road-world" id="roadWorld">
+          <div class="road horizon-road" aria-hidden="true"></div>
+          <button class="route-sign left" id="leftChoice" type="button"><span class="arrow">←</span><strong>—</strong><small>—</small></button>
+          <button class="route-sign right" id="rightChoice" type="button"><strong>—</strong><small>—</small><span class="arrow">→</span></button>
+          <div class="fork-light left" aria-hidden="true"></div><div class="fork-light right" aria-hidden="true"></div>
+          <div class="vehicle-wrap" id="vehicleWrap"><div class="vehicle-large" id="vehicleLarge" aria-label="系譜を走る車"></div><span class="car-plate" id="carPlate">山田錦号</span></div>
+          <div class="current-rice"><small>CURRENT RICE</small><strong id="currentRiceJa">山田錦</strong><span id="currentRiceEn">YAMADA NISHIKI</span></div>
+        </div>
+
+        <div class="question-panel"><span class="pixel-grain" aria-hidden="true">◆</span><div><small id="questionKicker">CHECKPOINT 1</small><strong id="questionText">どっちが親？</strong><span id="questionSub">Choose the correct route.</span></div></div>
+        <div class="arcade-controls"><button id="leftControl" type="button"><b>←</b><span>ひだり<small>LEFT / SWIPE</small></span></button><button id="rightControl" type="button"><span>みぎ<small>RIGHT / SWIPE</small></span><b>→</b></button></div>
+        <div class="feedback" id="feedback" role="status" aria-live="assertive"></div>
+      </div>
+    </section>
+
+    <section class="screen clear-screen" id="clearScreen" aria-labelledby="clearTitle" hidden>
+      <div class="clear-stage">
+        <div class="clear-sky" aria-hidden="true"><i class="clear-sun"></i><i class="confetti c1"></i><i class="confetti c2"></i><i class="confetti c3"></i><i class="confetti c4"></i><i class="confetti c5"></i><i class="confetti c6"></i></div>
+        <p class="clear-kicker">MISSION COMPLETE</p>
+        <h2 id="clearTitle">CLEAR!</h2>
+        <p class="clear-sub">正解！ 系譜がつながった。</p>
+        <div class="clear-route" id="clearRoute"></div>
+        <div class="goal-scene"><div class="goal-gate">GOAL</div><div class="vehicle-large" id="clearVehicle"></div></div>
+        <div class="reward-bar"><span>★</span><div><small>REWARD</small><strong id="rewardScore">+300</strong></div><b>LINEAGE CONNECTED!</b></div>
+        <article class="learn-card"><div><small>LEARN</small><h3 id="learnTitle">山田錦</h3><p id="learnText">—</p></div><span class="rice-card">NEW<small id="cardName">山田錦</small></span></article>
+        <button class="next-btn" id="backToBoard" type="button">BOARDへ戻る <b>→</b></button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="infoModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+    <div class="modal-head"><div><small>RICE LINEAGE</small><h2 id="infoTitle">DATA / SOURCES</h2></div><button id="closeInfo" type="button" aria-label="閉じる">×</button></div>
+    <p class="data-note">ゲームのルートは既存の <code>SOURCE_LEDGER.md</code> で確認済みの交配・選抜関係だけを使っています。交配（CROSS）と選抜（SELECTION）は同じものとして扱いません。</p>
+    <details open><summary>PLAYABLE MISSIONS</summary><div id="missionIndex" class="data-grid"></div></details>
+    <details><summary>PRIMARY SOURCES</summary><div id="sourceList" class="source-list"></div></details>
+  </div>
+</div>
+
+<div class="gameover" id="gameOver" hidden><div><small>NO MORE HEARTS</small><strong>GAME OVER</strong><p>もう一度このルートを走る？</p><button id="retryMission" type="button">RETRY</button><button id="gameOverBoard" type="button">BOARD</button></div></div>
+
+<script src="./data.js?v=20260910-1"></script>
+<script src="./app.js?v=20260911-arcade1"></script>
+</body>
+</html>
