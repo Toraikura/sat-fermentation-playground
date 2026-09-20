@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "games": [
+    {
+      "id": "shubo-dive",
+      "title": [
+        "SHUBO",
+        "DIVE"
+      ],
+      "url": "https://toraikura.github.io/shubo-dive/",
+      "group": "shubo",
+      "type": "ACTION / MICROSCOPIC ODYSSEY",
+      "description": {
+        "ja": "一粒の米が、未知の惑星になる。菌糸の森を飛び、仲間を救って帰ろう。",
+        "en": "Fly through a microscopic world, rescue your crew, and return home."
+      },
+      "route": "DIVE → RESCUE → RETURN",
+      "image": {
+        "src": "https://toraikura.github.io/sat-fermentation-playground/assets/shared-experiences/shubo-dive.webp",
+        "width": 600,
+        "height": 596,
+        "position": "center 18%"
+      }
+    },
+    {
+      "id": "shubo-world",
+      "title": [
+        "SHUBO"
+      ],
+      "url": "https://toraikura.github.io/shubo-world/",
+      "group": "shubo",
+      "type": "EXPLORE / FERMENTATION WORLD",
+      "description": {
+        "ja": "ひと桶の、小宇宙。蔵を見渡し、木桶の中に広がる小さな生命の世界へ。",
+        "en": "Explore a brewery and enter the tiny world of life inside its wooden vat."
+      },
+      "route": "KURA → LIFE → REAL",
+      "image": {
+        "src": "https://toraikura.github.io/sat-fermentation-playground/assets/shared-experiences/shubo-world.webp",
+        "width": 550,
+        "height": 674,
+        "position": "center 42%"
+      }
+    }
+  ]
+}

@@ -17,55 +17,67 @@
   <meta property="og:image" content="https://toraikura.github.io/sat-fermentation-playground/og.png">
   <meta name="twitter:card" content="summary_large_image">
 
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "FERMENTATION PLAYGROUND",
-    "url": "https://toraikura.github.io/sat-fermentation-playground/",
-    "description": "香り・酒米・酒母を入口に、日本酒をゲームとインタラクティブ体験で遊ぶSAKE ART TOKYOのFERMENTATION PLAYGROUND。",
-    "isPartOf": {
-      "@type": "WebSite",
-      "name": "SAKE ART TOKYO",
-      "url": "https://sakearttokyo.com/"
-    },
-    "mainEntity": {
-      "@type": "ItemList",
-      "numberOfItems": 5,
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "AROMA LABO",
-          "url": "https://toraikura.github.io/sat-fermentation-playground/aroma-lab/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "AROMA MATCH",
-          "url": "https://toraikura.github.io/sat-fermentation-playground/aroma-lab/aroma-match/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "RICE LINEAGE",
-          "url": "https://toraikura.github.io/sat-fermentation-playground/rice-lineage/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 4,
-          "name": "SHUBO RUN",
-          "url": "https://toraikura.github.io/shubo-run/"
-        },
-        {
-          "@type": "ListItem",
-          "position": 5,
-          "name": "SAKE CLASH",
-          "url": "https://toraikura.github.io/sake-clash/"
-        }
-      ]
-    }
+  <script type="application/ld+json" id="experience-structured-data">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "FERMENTATION PLAYGROUND",
+  "url": "https://toraikura.github.io/sat-fermentation-playground/",
+  "description": "香り・酒米・酒母を入口に、日本酒をゲームとインタラクティブ体験で遊ぶSAKE ART TOKYOのFERMENTATION PLAYGROUND。",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "SAKE ART TOKYO",
+    "url": "https://sakearttokyo.com/"
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "numberOfItems": 7,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "AROMA LABO",
+        "url": "https://toraikura.github.io/sat-fermentation-playground/aroma-lab/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "AROMA MATCH",
+        "url": "https://toraikura.github.io/sat-fermentation-playground/aroma-lab/aroma-match/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "RICE LINEAGE",
+        "url": "https://toraikura.github.io/sat-fermentation-playground/rice-lineage/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 4,
+        "name": "SHUBO DIVE",
+        "url": "https://toraikura.github.io/shubo-dive/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 5,
+        "name": "SHUBO",
+        "url": "https://toraikura.github.io/shubo-world/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 6,
+        "name": "SHUBO RUN",
+        "url": "https://toraikura.github.io/shubo-run/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 7,
+        "name": "SAKE CLASH",
+        "url": "https://toraikura.github.io/sake-clash/"
+      }
+    ]
   }
+}
   </script>
 </head>
 <body>
@@ -94,9 +106,9 @@
           日本酒を、読む前に遊ぶ。
           <small>香り、米、酒母。気になる入口からどうぞ。PLAY FIRST. DISCOVER LATER.</small>
         </p>
-        <div class="hero-count" aria-label="3つの入口と5つの体験があります">
+        <div class="hero-count" aria-label="3つの入口と7つの体験があります">
           <div><strong>3</strong><span>ENTRANCES</span></div>
-          <div><strong>5</strong><span>EXPERIENCES</span></div>
+          <div><strong data-experience-count>7</strong><span>EXPERIENCES</span></div>
         </div>
       </div>
     </section>
@@ -120,7 +132,7 @@
             </div>
           </header>
 
-          <div class="experience-list">
+          <div class="experience-list" data-catalog-group="aroma">
             <a class="experience-card" href="./aroma-lab/">
               <div>
                 <div class="experience-top"><span class="experience-type">EXPLORE / INTERACTIVE LAB</span><span class="live">LIVE</span></div>
@@ -178,7 +190,7 @@
             </div>
           </header>
 
-          <div class="experience-list">
+          <div class="experience-list" data-catalog-group="rice">
             <a class="experience-card" href="./rice-lineage/">
               <div>
                 <div class="experience-top"><span class="experience-type">ARCADE / LINEAGE GAME</span><span class="live">LIVE</span></div>
@@ -212,7 +224,36 @@
             </div>
           </header>
 
-          <div class="experience-list">
+          <div class="experience-list" data-catalog-group="shubo">
+            <a class="experience-card" data-shared-experience="shubo-dive" href="https://toraikura.github.io/shubo-dive/">
+              <div>
+                <div class="experience-top"><span class="experience-type">ACTION / MICROSCOPIC ODYSSEY</span><span class="live">LIVE</span></div>
+                <h3>SHUBO DIVE</h3>
+                <div class="experience-preview preview-image" aria-hidden="true">
+                  <img src="https://toraikura.github.io/sat-fermentation-playground/assets/shared-experiences/shubo-dive.webp" alt="" width="600" height="596" loading="lazy" decoding="async" style="object-position:center 18%">
+                </div>
+                <p>一粒の米が、未知の惑星になる。菌糸の森を飛び、仲間を救って帰ろう。</p>
+              </div>
+              <div>
+                <div class="card-foot"><span>PLAY</span><span class="card-arrow" aria-hidden="true">→</span></div>
+                <div class="route">DIVE → RESCUE → RETURN</div>
+              </div>
+            </a>
+            <a class="experience-card" data-shared-experience="shubo-world" href="https://toraikura.github.io/shubo-world/">
+              <div>
+                <div class="experience-top"><span class="experience-type">EXPLORE / FERMENTATION WORLD</span><span class="live">LIVE</span></div>
+                <h3>SHUBO</h3>
+                <div class="experience-preview preview-image" aria-hidden="true">
+                  <img src="https://toraikura.github.io/sat-fermentation-playground/assets/shared-experiences/shubo-world.webp" alt="" width="550" height="674" loading="lazy" decoding="async" style="object-position:center 42%">
+                </div>
+                <p>ひと桶の、小宇宙。蔵を見渡し、木桶の中に広がる小さな生命の世界へ。</p>
+              </div>
+              <div>
+                <div class="card-foot"><span>PLAY</span><span class="card-arrow" aria-hidden="true">→</span></div>
+                <div class="route">KURA → LIFE → REAL</div>
+              </div>
+            </a>
+
             <a class="experience-card" href="https://toraikura.github.io/shubo-run/">
               <div>
                 <div class="experience-top"><span class="experience-type">ARCADE GAME</span><span class="live">LIVE</span></div>
@@ -271,5 +312,6 @@
       <span>PLAY FIRST. DISCOVER LATER.</span>
     </div>
   </footer>
+  <script src="./shared-experiences.js?v=20260920-1" data-catalog-surface="hub" defer></script>
 </body>
 </html>
