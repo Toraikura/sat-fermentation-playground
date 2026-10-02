@@ -62,6 +62,8 @@ jobs:
       - name: Page contract
         run: |
           grep -q 'RICE LINEAGE' rice-lineage/index.html
-          grep -q 'id="lineageSvg"' rice-lineage/index.html
-          grep -q 'id="mobileParents"' rice-lineage/index.html
-          grep -q 'id="fullMapModal"' rice-lineage/index.html
+          grep -q 'id="boardLines"' rice-lineage/index.html
+          grep -q 'id="worldNav"' rice-lineage/index.html
+          grep -q 'id="leftControl"' rice-lineage/index.html
+          grep -q 'id="rightControl"' rice-lineage/index.html
+          grep -q 'id="gameOver"' rice-lineage/index.html
